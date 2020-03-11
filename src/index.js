@@ -11,10 +11,10 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use((req, res, next) => {
+app.use(async (req, res, next) => {
   req.context = {
     models,
-    me: models.users[1]
+    me: await models.User.findByLogin('Rotschy')
   };
 
   next();
@@ -24,7 +24,7 @@ app.use('/session', routes.session);
 app.use('/users', routes.user);
 app.use('/messages', routes.message);
 
-const eraseDatabaseOnSync = false;
+const eraseDatabaseOnSync = true;
 
 connectDb().then(async () => {
   if (eraseDatabaseOnSync) {
@@ -60,7 +60,7 @@ const createUsersWithMessages = async () => {
     user: user2.id
   });
 
-  const message2 = new models.Message({
+  const message3 = new models.Message({
     text: 'Top of the morning to you, sir!',
     user: user2.id
   });
