@@ -1,13 +1,11 @@
 import mongoose from 'mongoose';
 
 import User from './user';
-import Message from './message';
+import collectionModel from './collectionModel';
 
-const connectDb = () => {
-  return mongoose.connect(process.env.DATABASE_URL);
-};
+const connectDb = () => mongoose.connect(process.env.DATABASE_URL, { useNewUrlParser: true });
 
-const models = { User, Message };
+const models = { User, collectionModel };
 
 export { connectDb };
 
