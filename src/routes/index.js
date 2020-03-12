@@ -1,9 +1,7 @@
-import session from './session';
 import user from './user';
-import message from './message';
+import CollectionRouter from './collectionRouter';
 
 export default {
-  session,
   user,
-  message,
+  CollectionRouter
 };
