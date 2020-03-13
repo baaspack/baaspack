@@ -38,11 +38,7 @@ class CollectionRouter {
 
       console.log(req.body);
 
-      Object.keys(req.body).forEach((key) => {
-        resource[key] = req.body[key];
-      });
-
-      console.log(resource);
+      resource.text = req.body.text;
 
       await resource.save();
 
