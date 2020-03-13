@@ -2,13 +2,13 @@ import 'dotenv/config';
 import cors from 'cors';
 import express from 'express';
 import { MongoClient } from 'mongodb';
-
 import createResources from './resources';
+import CollectionManager from './routes/CollectionManager';
 
-const dbClient = new MongoClient(
-  process.env.SERVER_URL,
-  { useNewUrlParser: true, useUnifiedTopology: true },
-);
+const dbClient = new MongoClient(process.env.SERVER_URL, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+});
 
 const app = express();
 
@@ -16,17 +16,23 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const seedData = false;
+const seedData = true;
 
 const main = async () => {
   try {
     await dbClient.connect();
+    const collectionManager = new CollectionManager(
+      dbClient.db(process.env.DATABASE_NAME)
+    );
 
-    const resources = await createResources(dbClient.db(process.env.DATABASE_NAME), seedData);
+    const resources = await createResources(
+      dbClient.db(process.env.DATABASE_NAME),
+      seedData
+    );
 
     app.use(async (req, res, next) => {
       req.context = {
-        me: await resources.user.find({ username: 'Rotschy' }),
+        me: await resources.user.find({ username: 'Rotschy' })
       };
 
       next();
@@ -35,6 +41,8 @@ const main = async () => {
     Object.keys(resources).forEach((resource) => {
       app.use(`/${resource}s`, resources[resource].router);
     });
+
+    app.use('/collections', collectionManager.router);
 
     app.listen(process.env.PORT, () => {
       console.log(`Example app listening on port ${process.env.PORT}!`);

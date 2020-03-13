@@ -10,7 +10,7 @@ class Resource extends Model {
 }
 
 const createResources = async (db, seedData) => {
-  const resourceNames = ['user', 'message'];
+  const resourceNames = ['user', 'message']; // this needs to updated
 
   const resources = resourceNames.reduce((accumulator, resourceName) => {
     accumulator[resourceName] = new Resource(db, resourceName);
