@@ -1,19 +1,19 @@
-import { Router, response } from 'express';
+const createCollectionEndpoints = (router, getCollectionNames, generateModels, addRoutesFromModel) => {
+  router.get('/Collections/', async (req, res) => {
+    const collectionNames = await getCollectionNames();
 
-class CollectionManager {
-  constructor(db) {
-    this.db = db;
-    this.router = Router();
-    this.generateRoutes();
-  }
+    res.json(collectionNames);
+  });
 
-  generateRoutes() {
-    this.router.get('/', async (req, res) => {
-      let collections = await this.db.listCollections().toArray();
-      collections = collections.map((collection) => collection.name);
-      return res.send(collections);
-    });
-  }
-}
+  router.post('/Collections/', async (req, res) => {
+    const { collectionName } = req.body;
 
-export default CollectionManager;
+    const newModels = await generateModels([collectionName]);
+
+    addRoutesFromModel(router, newModels[collectionName]);
+
+    return res.send(collectionName);
+  });
+};
+
+export default createCollectionEndpoints;
