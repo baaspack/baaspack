@@ -56,7 +56,7 @@ const createGenericRoutes = (model) => {
   return routes;
 };
 
-// QUESTION: Can we make this a pure function?
+// TODO: Can we make this a pure function?
 const addRoutesFromModel = (router, model) => {
   const routeObjects = createGenericRoutes(model);
 
@@ -65,8 +65,6 @@ const addRoutesFromModel = (router, model) => {
 
     router[type](path, protectedHandler);
   });
-
-  return router;
 };
 
 

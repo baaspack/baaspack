@@ -5,8 +5,6 @@ const createAppModel = (name, mongooseModel) => {
       const documents = await mongooseModel
         .find(queryObj);
 
-      console.log(documents);
-
       return documents;
     },
     async get(id) {

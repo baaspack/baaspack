@@ -40,13 +40,13 @@ export const connectToDb = async ({ serverUrl, dbName }) => {
 export const generateModels = async (collectionsToCreate) => {
   const collectionNames = collectionsToCreate || await getCollectionNames();
 
-  const appModels = collectionNames.reduce((hash, collectionName) => {
+  const appModels = collectionNames.reduce((obj, collectionName) => {
     const mongooseModel = mongoose.model(collectionName, defaultSchema, collectionName);
 
     // eslint-disable-next-line no-param-reassign
-    hash[collectionName] = createAppModel(collectionName, mongooseModel);
+    obj[collectionName] = createAppModel(collectionName, mongooseModel);
 
-    return hash;
+    return obj;
   }, {});
 
   return appModels;
