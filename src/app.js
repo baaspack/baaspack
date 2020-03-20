@@ -9,14 +9,24 @@ const createExpressApp = (routes) => {
   // Enable CORS from all origins
   app.use(cors());
 
+  // serve static files from public
+  app.use(express.static('./public'));
+  app.use('/.static', express.static('./public'));
+
+  // serve static files from files
+  // app.use(express.static('files'));
+
   // Parse JSON from request bodies
   app.use(express.json());
 
   // Parse Url Encoded request bodies, typically sent from forms.
   app.use(express.urlencoded({ extended: true }));
 
+
+
   // Configure routes for collections w/ error handling built-in
   app.use(routes);
+
 
   // 404 response for requests that didn't hit a route
   app.use(errorHandlers.notFound);
