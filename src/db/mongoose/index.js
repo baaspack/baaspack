@@ -3,6 +3,8 @@ import defaultSchema from './defaultSchema';
 import createAppModel from './MongooseModel';
 import fillDbWithSeedData from '../seedData';
 
+export { default as User } from './models/User';
+
 mongoose.connection.on('error', (err) => {
   console.error(`Mongoose Error: ${err.message}`);
 });
@@ -29,6 +31,7 @@ export const connectToDb = async ({ serverUrl, dbName }) => {
       useNewUrlParser: true,
       useUnifiedTopology: true,
       useFindAndModify: false,
+      useCreateIndex: true,
     });
 
     console.log(`Connected to ${connectionString}`);
@@ -61,5 +64,6 @@ export const seedDatabase = async () => {
 
   return appModels;
 };
+
 
 export default mongoose;
