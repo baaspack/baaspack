@@ -3,7 +3,7 @@ import cors from 'cors';
 
 import errorHandlers from './handlers/errorHandlers';
 
-const createExpressApp = (routes) => {
+const createExpressApp = (routes, authRoutes) => {
   const app = express();
 
   // Enable CORS from all origins
@@ -16,6 +16,7 @@ const createExpressApp = (routes) => {
   app.use(express.urlencoded({ extended: true }));
 
   // Configure routes for collections w/ error handling built-in
+  app.use('/user', authRoutes);
   app.use(routes);
 
   // 404 response for requests that didn't hit a route

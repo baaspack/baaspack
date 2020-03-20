@@ -6,7 +6,10 @@ import {
   generateModels,
   seedDatabase,
   getCollectionNames,
+  User,
 } from './db/mongoose';
+
+import createAuthRoutes from './routes/auth';
 
 import addRoutesFromModel from './routes';
 import createCollectionEndpoints from './routes/collectionManager';
@@ -42,10 +45,13 @@ const start = async () => {
     addRoutesFromModel(router, model);
   });
 
+  // Generate endpoints for authentication
+  const authRoutes = createAuthRoutes(User);
+
   // Generate endpoints for collections
   createCollectionEndpoints(router, getCollectionNames, generateModels, addRoutesFromModel);
 
-  const app = createExpressApp(router);
+  const app = createExpressApp(router, authRoutes);
 
   // Start the web server
   const webServerPort = process.env.PORT || 3000;
