@@ -3,6 +3,7 @@ import { Router } from 'express';
 
 import {
   connectToDb,
+  generateModel,
   generateModels,
   seedDatabase,
   getCollectionNames,
@@ -49,7 +50,7 @@ const start = async () => {
   const authRoutes = createAuthRoutes(User);
 
   // Generate endpoints for collections
-  createCollectionEndpoints(router, getCollectionNames, generateModels, addRoutesFromModel);
+  createCollectionEndpoints(router, getCollectionNames, generateModel, addRoutesFromModel);
 
   const app = createExpressApp(router, authRoutes);
 
