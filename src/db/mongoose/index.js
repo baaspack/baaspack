@@ -16,8 +16,9 @@ export const getCollectionNames = async () => {
     .toArray();
 
   const collectionNames = collections
-    .filter(({ name }) => /user(s)?/i.test(name))
+    .filter(({ name }) => !/user(s)?/i.test(name))
     .map(({ name }) => name);
+
 
   return collectionNames;
 };
