@@ -31,12 +31,7 @@ const createExpressApp = (routes, authRoutes, passport) => {
 
   // Configure routes for collections w/ error handling built-in
   app.use(authRoutes);
-  app.use((req, res, next) => {
-    console.log(req.user);
-    return next();
-  });
   app.use(routes);
-
 
   // 404 response for requests that didn't hit a route
   app.use(errorHandlers.notFound);
