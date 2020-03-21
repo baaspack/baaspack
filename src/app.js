@@ -1,9 +1,10 @@
 import express from 'express';
+import session from 'express-session';
 import cors from 'cors';
 
 import errorHandlers from './handlers/errorHandlers';
 
-const createExpressApp = (routes, authRoutes) => {
+const createExpressApp = (routes, authRoutes, passport) => {
   const app = express();
 
   // Enable CORS from all origins
@@ -15,8 +16,18 @@ const createExpressApp = (routes, authRoutes) => {
   // Parse Url Encoded request bodies, typically sent from forms.
   app.use(express.urlencoded({ extended: true }));
 
+  // Configure sessions
+  app.use(session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: true,
+  }));
+
+  app.use(passport.initialize());
+  app.use(passport.session());
+
   // Configure routes for collections w/ error handling built-in
-  app.use('/user', authRoutes);
+  app.use(authRoutes);
   app.use(routes);
 
   // 404 response for requests that didn't hit a route

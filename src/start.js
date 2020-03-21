@@ -10,7 +10,8 @@ import {
   User,
 } from './db/mongoose';
 
-import createAuthRoutes from './routes/auth';
+import initializePassport from './handlers/authorization';
+import createAuthRoutes from './routes/authentication';
 
 import addRoutesFromModel from './routes';
 import createCollectionEndpoints from './routes/collectionManager';
@@ -41,18 +42,18 @@ const start = async () => {
   // Generate HTTP endpoints for routes
   const router = Router();
 
-  Object.keys(models).forEach((modelName) => {
-    const model = models[modelName];
+  models.forEach((model) => {
     addRoutesFromModel(router, model);
   });
 
-  // Generate endpoints for authentication
-  const authRoutes = createAuthRoutes(User);
+  // Generate endpoints for authentication & logging in
+  const passport = initializePassport(User);
+  const authRoutes = createAuthRoutes(User, passport);
 
   // Generate endpoints for collections
   createCollectionEndpoints(router, getCollectionNames, generateModel, addRoutesFromModel);
 
-  const app = createExpressApp(router, authRoutes);
+  const app = createExpressApp(router, authRoutes, passport);
 
   // Start the web server
   const webServerPort = process.env.PORT || 3000;

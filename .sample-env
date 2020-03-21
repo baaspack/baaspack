@@ -1,4 +1,4 @@
 PORT=3000
-JWT_SECRET=SomethingLong
+SESSION_SECRET=aSuperSecureString
 SERVER_URL=mongodb://127.0.0.1:27017/
 DATABASE_NAME=test

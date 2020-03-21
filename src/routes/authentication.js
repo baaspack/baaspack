@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
 import errorHandlers from '../handlers/errorHandlers';
 
 const { catchErrors } = errorHandlers;
@@ -46,52 +45,19 @@ const register = (User) => {
   };
 };
 
-const login = (User) => {
-  return async (req, res) => {
-    const { email, password } = req.body;
-
-    // Check that user exists
-    const users = await User.find({ email });
-    const user = users[0];
-
-    if (!user) {
-      return res.status(400).send('Email or password is wrong!');
-    }
-
-    const validPass = await bcrypt.compare(password, user.password);
-
-    if (!validPass) {
-      return res.status(400).send('Email or password is wrong!');
-    }
-
-    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET);
-    res.header('auth-token', token).send(token);
-  };
-};
-
-export const verifyToken = (req, res, next) => {
-  const token = req.header('auth-token');
-
-  if (!token) {
-    // TODO Not sure this is the best way to handle errors....
-    return next({ status: 401, message: 'Invalid token!' });
-  }
-
-  try {
-    const verifiedToken = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = verifiedToken.id;
-    next();
-  } catch (e) {
-    return next({ status: 400, message: 'Invalid token!' });
-  }
-};
-
-const createAuthRoutes = (User) => {
+const createAuthRoutes = (User, passport) => {
   const router = Router();
 
   router.post('/register', catchErrors(register(User)));
 
-  router.post('/login', catchErrors(login(User)));
+  router.post('/login', passport.authenticate('local'), (req, res) => {
+    res.json({ id: req.user.id });
+  });
+
+  router.post('/logout', (req, res) => {
+    req.logout();
+    res.json({ message: 'OK' });
+  });
 
   return router;
 };
