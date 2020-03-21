@@ -30,7 +30,11 @@ const initializePassport = (User) => {
   ));
 
   passport.serializeUser((user, done) => (done(null, user.id)));
-  passport.deserializeUser((id, done) => (done(null, User.get(id))));
+  passport.deserializeUser(async (userId, done) => {
+    const { id, email } = await User.get(userId);
+
+    return done(null, { id, email });
+  });
 
   return passport;
 };
