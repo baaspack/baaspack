@@ -49,12 +49,7 @@ export const generateModel = (collectionName) => {
 export const generateModels = async (collectionsToCreate) => {
   const collectionNames = collectionsToCreate || await getCollectionNames();
 
-  const appModels = collectionNames.reduce((obj, collectionName) => {
-    // eslint-disable-next-line no-param-reassign
-    obj[collectionName] = generateModel(collectionName);
-
-    return obj;
-  }, {});
+  const appModels = collectionNames.map(generateModel);
 
   return appModels;
 };
