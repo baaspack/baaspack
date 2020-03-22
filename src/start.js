@@ -10,6 +10,7 @@ import {
 
 import addRoutesFromModel from './routes';
 import createCollectionEndpoints from './routes/collectionManager';
+import createStorageEndpoints from './routes/storage.js'
 import createExpressApp from './app';
 
 // Import variables from .env to make them available on `process.env`
@@ -44,6 +45,9 @@ const start = async () => {
 
   // Generate endpoints for collections
   createCollectionEndpoints(router, getCollectionNames, generateModels, addRoutesFromModel);
+
+  // Generate endpoints for storage
+  createStorageEndpoints(router, './public');
 
   const app = createExpressApp(router);
 

@@ -1,7 +1,10 @@
 import express from 'express';
 import cors from 'cors';
 
+
 import errorHandlers from './handlers/errorHandlers';
+
+// const path = require('path');
 
 const createExpressApp = (routes) => {
   const app = express();
@@ -9,11 +12,13 @@ const createExpressApp = (routes) => {
   // Enable CORS from all origins
   app.use(cors());
 
-  // serve static files from public
-  app.use(express.static('./public'));
-  app.use('/.static', express.static('./public'));
+  // serve static files from public directory
+  app.use(express.static('public/uploads'));
+  app.use(express.static('public'));
+  // app.use('/static', express.static(path.join(__dirname, 'public')));
+  // app.use('/static', express.static(__dirname + '/public'));
 
-  // serve static files from files
+  // serve static files from files directory
   // app.use(express.static('files'));
 
   // Parse JSON from request bodies
@@ -21,8 +26,6 @@ const createExpressApp = (routes) => {
 
   // Parse Url Encoded request bodies, typically sent from forms.
   app.use(express.urlencoded({ extended: true }));
-
-
 
   // Configure routes for collections w/ error handling built-in
   app.use(routes);
