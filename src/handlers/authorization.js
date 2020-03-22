@@ -2,6 +2,17 @@ import passport from 'passport';
 import { Strategy as LocalStrategy } from 'passport-local';
 import bcrypt from 'bcrypt';
 
+export const hasApiKey = (req, res, next) => {
+  const rawAuthHeader = req.get('authorization');
+  const apiKey = rawAuthHeader && rawAuthHeader.split(' ')[1];
+
+  if (apiKey !== process.env.API_KEY) {
+    return res.status(401).send({ message: 'Check your auth tokens' });
+  }
+
+  return next();
+};
+
 const initializePassport = (User) => {
   const authenticateUser = async (email, password, done) => {
     const users = await User.find({ email });

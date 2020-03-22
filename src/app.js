@@ -3,12 +3,13 @@ import session from 'express-session';
 import cors from 'cors';
 
 import errorHandlers from './handlers/errorHandlers';
+import { hasApiKey } from './handlers/authorization';
 
 const createExpressApp = (routes, authRoutes, passport) => {
   const app = express();
 
   // Enable CORS from all origins
-  app.use(cors());
+  app.use(cors({ origin: true, credentials: true }));
 
   // Parse JSON from request bodies
   app.use(express.json());
@@ -25,6 +26,9 @@ const createExpressApp = (routes, authRoutes, passport) => {
       sameSite: true,
     },
   }));
+
+  // Early exit if a request doesn't include an auth header
+  app.use(hasApiKey);
 
   app.use(passport.initialize());
   app.use(passport.session());

@@ -60,6 +60,7 @@ const start = async () => {
 
   const server = app.listen(webServerPort, () => {
     console.log(`App is listening for connections on port ${server.address().port}.`);
+    console.log(`Looking out for API keys of: ${process.env.API_KEY}`);
   });
 };
 
