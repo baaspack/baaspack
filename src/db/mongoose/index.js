@@ -9,10 +9,16 @@ mongoose.connection.on('error', (err) => {
 
 mongoose.set('debug', true);
 
-export const getCollectionNames = async () => {
+const getCollections = async () => {
   const collections = await mongoose.connection.db
     .listCollections()
     .toArray();
+
+  return collections
+}
+
+export const getCollectionNames = async () => {
+  const collections = await getCollections();
 
   const collectionNames = collections
     .filter(({ name }) => name !== 'User')
@@ -20,6 +26,20 @@ export const getCollectionNames = async () => {
 
   return collectionNames;
 };
+
+export const collectionExists = async (collection) => {
+  const collections = await getCollectionNames();
+  return collections.includes(collection);
+}
+
+export const documentExists = async (collection, id) => {
+  try {
+    const model = mongoose.model(collection, defaultSchema, collection) // check with Ido about this
+    return await model.findById(id);
+  } catch {
+    console.log('Error: document does not exist');
+  }
+}
 
 export const connectToDb = async ({ serverUrl, dbName }) => {
   const connectionString = `${serverUrl}/${dbName}`;
@@ -37,6 +57,8 @@ export const connectToDb = async ({ serverUrl, dbName }) => {
   }
 };
 
+// how does this work? every time the app starts it adds the default schema to it?
+// add a websockets field to each object in a collection that takes a boolean value
 export const generateModels = async (collectionsToCreate) => {
   const collectionNames = collectionsToCreate || await getCollectionNames();
 

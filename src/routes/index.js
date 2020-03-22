@@ -62,10 +62,8 @@ const addRoutesFromModel = (router, model) => {
 
   routeObjects.forEach(({ type, path, handler }) => {
     const protectedHandler = errorHandlers.catchErrors(handler);
-
     router[type](path, protectedHandler);
   });
 };
-
 
 export default addRoutesFromModel;

@@ -8,6 +8,10 @@ import {
   getCollectionNames,
 } from './db/mongoose';
 
+import {
+  startWss,
+} from './websockets';
+
 import addRoutesFromModel from './routes';
 import createCollectionEndpoints from './routes/collectionManager';
 import createExpressApp from './app';
@@ -53,6 +57,9 @@ const start = async () => {
   const server = app.listen(webServerPort, () => {
     console.log(`App is listening for connections on port ${server.address().port}.`);
   });
+
+  // Start the websocket server
+  startWss(server);
 };
 
 start();
