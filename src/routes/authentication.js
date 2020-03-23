@@ -34,12 +34,10 @@ const register = (User) => {
 
     const passwordHash = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
 
-    const user = new User({
+    const user = await User.create({
       email,
       password: passwordHash,
     });
-
-    await user.save();
 
     res.send({ id: user.id });
   };
