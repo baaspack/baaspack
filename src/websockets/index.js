@@ -1,164 +1,26 @@
 import WebSocket from 'ws';
-import url from 'url';
-import { v4 as uuidv4 } from 'uuid';
-// import helpers from '../helpers';
-import { collectionExists, documentExists } from '../db/mongoose';
-import { Collection } from 'mongoose';
-
-// const getParams = (url) => {
-//   const queryIndex = url.indexOf('?');
-//   return url.slice(queryIndex);
-// }
-
-// const idNotGiven = (str) => {
-//   return str === '';
-// }
-
-// const sendMessage = (client, message) => {
-//   client.send(JSON.stringify(message));
-// }
-
-// const broadcastExclusive = (clients, self, message, from) => {
-//   const data = {
-//     actions: 'messageBroadcast',
-//     from,
-//     message,
-//   };
-
-//   clients.forEach(client => {
-//     if (client === self) return;
-
-//     sendMessage(client, data);
-//   });
-// }
-
-// const broadcastInclusive = (clients, message, from) => {
-//   const data = {
-//     actions: 'messageBroadcast',
-//     from,
-//     message,
-//   };
-
-//   clients.forEach(client => {
-//     sendMessage(client, data);
-//   });
-// }
+import onUpgradeEvent from './onUpgradeEvent';
+import OnConnectionEvent from './OnConnectionEvent';
+import OnMessageEvent from './OnMessageEvent';
+import OnCloseEvent from './OnCloseEvent';
 
 export const startWss = (server) => {
   const wss = new WebSocket.Server({ noServer: true });
   wss.channels = {};
 
-  server.on('upgrade', async function upgrade(request, socket, head) {
-    const params = new URLSearchParams(getParams(request.url));
-
-    let collection;
-    let id;
-
-    for (const [name, value] of params) {
-      switch (name) {
-        case 'collection':
-          collection = value;
-          break;
-        case 'id':
-          id = value;
-      }
-    }
-
-    if (await collectionExists(collection)) {
-      if (idNotGiven(id)) {
-        const channelName = collection;
-
-        wss.handleUpgrade(request, socket, head, function done(ws) {
-          wss.emit('connection', ws, request, channelName);
-        });
-      } else {
-        if (await documentExists(collection, id)) {
-          const channelName = `${collection}_${id}`;
-
-          wss.handleUpgrade(request, socket, head, function done(ws) {
-            wss.emit('connection', ws, request, channelName);
-          });
-        } else {
-          console.log('document does not exist');
-          socket.destroy();
-        }
-      }
-    } else {
-      console.log('collection does not exist');
-      socket.destroy();
-    }
+  server.on('upgrade', function upgrade(request, socket, head) {
+    onUpgradeEvent(request, socket, head, wss);
   });
 
   wss.on('connection', (client, request, channelName) => {
-    if (!wss.channels[channelName]) {
-      wss.channels[channelName] = { clients: [] };
-    }
-
-    const id = uuidv4();
-
-    client.uuid = id;
-
-    wss.channels[channelName].clients.push(client);
-
-    const message = {
-      action: 'welcome',
-      id,
-      channelName,
-    }
-
-    sendMessage(client, message);
+    new OnConnectionEvent(wss, client, request, channelName);
 
     client.on('message', (data) => {
-      const connection = new Connection(wss, client, JSON.parse(data));
-      // const {
-      //   channelName,
-      //   collection,
-      //   id,
-      //   actions,
-      //   message,
-      // } = JSON.parse(data);
+      new OnMessageEvent(wss, client, JSON.parse(data));
+    });
 
-      // actions.forEach((action) => {
-      //   switch (action) {
-      //     case 'send':
-      //       break;
-      //     case 'get':
-      //       break;
-      //     case 'update':
-      //       break;
-      //     case 'delete':
-      //       break;
-      //     case 'open':
-      //       break;
-      //     case 'close':
-      //       break;
-      //     case 'typing':
-      //       break;
-      //     case 'transfer':
-      //       break;
-      //     default:
-      //   }
-
-      // case 'onopen':
-      //   sendMessage(client, {
-      //     actions: 'response',
-      //     message: 'hello',
-      //   });
-      // case 'save':
-      //   // save message to db;
-      //   break;
-      // case 'broadcastInclusive':
-      //   broadcastInclusive(wss.channels[channelName].clients, client, message, client.userName);
-      //   break;
-      // case 'broadcastExclusive':
-      //   broadcastExclusive(wss.channels[channelName].clients, message, client.userName);
-      //   break;
-      // default:
-      //   sendMessage(client, {
-      //     actions: 'error',
-      //     message: 'Error: invalid action',
-      //   });
-      // });
+    client.on('close', (data) => {
+      new OnCloseEvent(wss, client, JSON.parse(data));
     });
   });
 }
