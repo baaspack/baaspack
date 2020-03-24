@@ -12,15 +12,6 @@ const createExpressApp = (routes) => {
   // Enable CORS from all origins
   app.use(cors());
 
-  // serve static files from public directory
-  app.use(express.static('public/uploads'));
-  app.use(express.static('public'));
-  // app.use('/static', express.static(path.join(__dirname, 'public')));
-  // app.use('/static', express.static(__dirname + '/public'));
-
-  // serve static files from files directory
-  // app.use(express.static('files'));
-
   // Parse JSON from request bodies
   app.use(express.json());
 
@@ -30,6 +21,11 @@ const createExpressApp = (routes) => {
   // Configure routes for collections w/ error handling built-in
   app.use(routes);
 
+  // serve static files from public directory
+  app.use(express.static('public/uploads'));
+  app.use(express.static('public'));
+  // app.use('/static', express.static(path.join(__dirname, 'public')));
+  // app.use('/static', express.static(__dirname + '/public'));
 
   // 404 response for requests that didn't hit a route
   app.use(errorHandlers.notFound);

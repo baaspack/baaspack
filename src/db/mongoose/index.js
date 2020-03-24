@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import defaultSchema from './defaultSchema';
+import uploadsMetadataSchema from './uploadsMetadataSchema';
 import createAppModel from './MongooseModel';
 import fillDbWithSeedData from '../seedData';
 
@@ -51,6 +52,11 @@ export const generateModels = async (collectionsToCreate) => {
 
   return appModels;
 };
+
+export const generateUploadsModel = () => {
+  const model = mongoose.model('uploads', uploadsMetadataSchema);
+  return createAppModel('uploads', model);
+}
 
 export const seedDatabase = async () => {
   const collectionNames = ['Message'];

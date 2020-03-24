@@ -4,13 +4,14 @@ import { Router } from 'express';
 import {
   connectToDb,
   generateModels,
+  generateUploadsModel,
   seedDatabase,
   getCollectionNames,
 } from './db/mongoose';
 
 import addRoutesFromModel from './routes';
 import createCollectionEndpoints from './routes/collectionManager';
-import createStorageEndpoints from './routes/storage.js'
+import createUploadsEndpoints from './routes/uploads';
 import createExpressApp from './app';
 
 // Import variables from .env to make them available on `process.env`
@@ -47,7 +48,9 @@ const start = async () => {
   createCollectionEndpoints(router, getCollectionNames, generateModels, addRoutesFromModel);
 
   // Generate endpoints for storage
-  createStorageEndpoints(router, './public');
+  models.uploads = generateUploadsModel();
+  createUploadsEndpoints(router, models.uploads);
+  console.log(models.uploads)
 
   const app = createExpressApp(router);
 
