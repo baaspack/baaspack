@@ -2,9 +2,9 @@ import WebsocketEvent from './websocketEvent';
 import { v4 as uuidv4 } from 'uuid';
 
 class OnConnectionEvent extends WebsocketEvent {
-  constructor(wss, client, request, channelName) {
-    super(wss, client, { channelName, collection: null, id: null });
-    this.request = request; // i don't need this
+  constructor(wss, client, request, data) {
+    super(wss, client, data);
+    this.request = request; // i don't need the request object here
     this.createChannelName();
     this.createClientId();
     this.addClientToChannel();
@@ -18,9 +18,8 @@ class OnConnectionEvent extends WebsocketEvent {
   }
 
   createClientId = () => {
-    this.id = uuidv4();
-
-    this.client.uuid = this.id;
+    this.userId = uuidv4();
+    this.client.userId = this.id;
   }
 
   addClientToChannel = () => {
@@ -28,13 +27,13 @@ class OnConnectionEvent extends WebsocketEvent {
   }
 
   response = () => {
-    const message = {
-      actions: ['onConnection'],
-      data: {
-        id: this.id,
+    const message = [{
+      name: 'onConnection',
+      envelope: {
+        userId: this.userId,
         channelName: this.channelName,
-      }
-    }
+      },
+    }];
 
     this.sendMessage(this.client, message);
   }

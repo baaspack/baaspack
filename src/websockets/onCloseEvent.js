@@ -1,8 +1,8 @@
 import WebsocketEvent from './websocketEvent';
 
 class OnCloseEvent extends WebsocketEvent {
-  constructor(wss, client, { channelName, collection, id }) {
-    super(wss, client, channelName, collection, id);
+  constructor(wss, client, data) {
+    super(wss, client, data);
   }
 }
 

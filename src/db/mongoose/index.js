@@ -9,6 +9,7 @@ mongoose.connection.on('error', (err) => {
 
 mongoose.set('debug', true);
 
+// begin functions added by holden...
 const getCollections = async () => {
   const collections = await mongoose.connection.db
     .listCollections()
@@ -16,16 +17,6 @@ const getCollections = async () => {
 
   return collections
 }
-
-export const getCollectionNames = async () => {
-  const collections = await getCollections();
-
-  const collectionNames = collections
-    .filter(({ name }) => name !== 'User')
-    .map(({ name }) => name);
-
-  return collectionNames;
-};
 
 export const collectionExists = async (collection) => {
   const collections = await getCollectionNames();
@@ -40,6 +31,23 @@ export const documentExists = async (collection, id) => {
     console.log('Error: document does not exist');
   }
 }
+
+export const createDocument = async (collection, data) => {
+  const model = mongoose.model(collection, defaultSchema, collection) // check with Ido about this
+  const document = await model.create(data);
+  return document;
+}
+// ... end functions added by holden
+
+export const getCollectionNames = async () => {
+  const collections = await getCollections();
+
+  const collectionNames = collections
+    .filter(({ name }) => name !== 'User')
+    .map(({ name }) => name);
+
+  return collectionNames;
+};
 
 export const connectToDb = async ({ serverUrl, dbName }) => {
   const connectionString = `${serverUrl}/${dbName}`;

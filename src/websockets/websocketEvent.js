@@ -1,29 +1,24 @@
 class WebsocketEvent {
-  constructor(wss, client, { channelName, collection, id }) {
+  constructor(wss, client, { channelName, collectionName, collectionId, userId }) {
     this.wss = wss;
     this.client = client;
     this.channelName = channelName;
-    this.collection = collection;
-    this.id = id;
+    this.collectionName = collectionName;
+    this.collectionId = collectionId;
+    this.userId = userId;
   }
 
   sendMessage = (client, message) => {
     client.send(JSON.stringify(message));
   }
 
-  broadcast = (message, from, excludeSelf = true) => {
-    const data = {
-      actions: 'send',
-      from,
-      message,
-    };
-
-    clients.forEach(client => {
-      if (excludeSelf) {
+  broadcast = (broadcast, message) => { // broadcast param is set to 'includeSelf' or 'excludeSelf'. change that.
+    this.wss.channels[this.channelName].clients.forEach(client => {
+      if (broadcast === 'excludeSelf') {
         if (client === self) return;
       }
 
-      sendMessage(client, data);
+      this.sendMessage(client, message);
     });
   }
 }
