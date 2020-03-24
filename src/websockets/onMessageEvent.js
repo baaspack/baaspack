@@ -4,6 +4,8 @@ import { createDocument } from '../db/mongoose';
 class OnMessageEvent extends WebsocketEvent {
   constructor(wss, client, data) {
     super(wss, client, data);
+    // this.actions = data.actions;
+    // this.actionsRouter();
     this.actions = data.actions;
     this.actionsRouter();
   }
@@ -98,7 +100,7 @@ class OnMessageEvent extends WebsocketEvent {
 
     const record = {
       userId: this.userId,
-      [`${this.collectionName.toLowerCase()}Id`]: this.collectionId,
+      [`${this.collectionName.toLowerCase()}Id`]: this.documentId,
       data,
       type,
     };

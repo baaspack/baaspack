@@ -6,7 +6,7 @@ const getParams = (url) => {
   return url.slice(queryIndex);
 }
 
-const collectionIdNotGiven = (str) => {
+const documentIdNotGiven = (str) => {
   return str === '';
 }
 
@@ -14,31 +14,31 @@ const onUpgradeEvent = async (request, socket, head, wss) => {
   const params = new URLSearchParams(getParams(request.url));
 
   let collectionName;
-  let collectionId;
+  let documentId;
 
   for (const [name, value] of params) {
     switch (name) {
       case 'collectionName':
         collectionName = value;
         break;
-      case 'collectionId':
-        collectionId = value;
+      case 'documentId':
+        documentId = value;
     }
   }
 
   if (await collectionExists(collectionName)) {
-    if (collectionIdNotGiven(collectionId)) {
+    if (documentIdNotGiven(documentId)) {
       const channelName = collectionName;
 
       wss.handleUpgrade(request, socket, head, function done(ws) {
-        wss.emit('connection', ws, request, channelName, collectionName, collectionId);
+        wss.emit('connection', ws, request, channelName, collectionName, documentId);
       });
     } else {
-      if (await documentExists(collectionName, collectionId)) {
-        const channelName = `${collectionName}_${collectionId}`;
+      if (await documentExists(collectionName, documentId)) {
+        const channelName = `${collectionName}_${documentId}`;
 
         wss.handleUpgrade(request, socket, head, function done(ws) {
-          wss.emit('connection', ws, request, channelName, collectionName, collectionId);
+          wss.emit('connection', ws, request, channelName, collectionName, documentId);
         });
       } else {
         console.log('document does not exist');

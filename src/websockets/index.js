@@ -12,8 +12,8 @@ export const startWss = (server) => {
     onUpgradeEvent(request, socket, head, wss);
   });
 
-  wss.on('connection', (client, request, channelName, collectionName, collectionId) => { // i don't need the request object here
-    const data = { channelName, collectionName, collectionId, userId: null };
+  wss.on('connection', (client, request, channelName, collectionName, documentId) => { // i don't need the request object here
+    const data = { channelName, collectionName, documentId, userId: null };
     new OnConnectionEvent(wss, client, request, data); // i don't need the request object here
 
     client.on('message', (data) => {

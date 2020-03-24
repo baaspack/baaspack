@@ -1,10 +1,10 @@
 class WebsocketEvent {
-  constructor(wss, client, { channelName, collectionName, collectionId, userId }) {
+  constructor(wss, client, { channelName, collectionName, documentId, userId }) {
     this.wss = wss;
     this.client = client;
     this.channelName = channelName;
     this.collectionName = collectionName;
-    this.collectionId = collectionId;
+    this.documentId = documentId;
     this.userId = userId;
   }
 
