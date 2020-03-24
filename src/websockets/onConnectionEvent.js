@@ -27,13 +27,13 @@ class OnConnectionEvent extends WebsocketEvent {
   }
 
   response = () => {
-    const message = [{
+    const message = {
       name: 'onConnection',
       envelope: {
         userId: this.userId,
         channelName: this.channelName,
       },
-    }];
+    };
 
     this.sendMessage(this.client, message);
   }

@@ -17,6 +17,7 @@ export const startWss = (server) => {
     new OnConnectionEvent(wss, client, request, data); // i don't need the request object here
 
     client.on('message', (data) => {
+      console.log(`ON MESSAGE DATA, ${JSON.parse(data)}`);
       new OnMessageEvent(wss, client, JSON.parse(data));
     });
 
