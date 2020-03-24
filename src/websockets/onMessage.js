@@ -1,7 +1,7 @@
-import WebsocketEvent from './websocketEvent';
+import Websocket from './websocket';
 import { createDocument } from '../db/mongoose';
 
-class OnMessageEvent extends WebsocketEvent {
+class OnMessage extends Websocket {
   constructor(wss, client, data) {
     super(wss, client, data);
     this.actionRouter(data.action);
@@ -102,4 +102,4 @@ class OnMessageEvent extends WebsocketEvent {
   }
 }
 
-export default OnMessageEvent;
+export default OnMessage;

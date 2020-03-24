@@ -1,4 +1,4 @@
-class WebsocketEvent {
+class Websocket {
   constructor(wss, client, { channelName, collectionName, documentId, userId }) {
     this.wss = wss;
     this.client = client;
@@ -23,4 +23,4 @@ class WebsocketEvent {
   }
 }
 
-export default WebsocketEvent;
+export default Websocket;

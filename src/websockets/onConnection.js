@@ -1,7 +1,7 @@
-import WebsocketEvent from './websocketEvent';
+import Websocket from './websocket';
 import { v4 as uuidv4 } from 'uuid';
 
-class OnConnectionEvent extends WebsocketEvent {
+class OnConnection extends Websocket {
   constructor(wss, client, request, data) {
     super(wss, client, data);
     this.request = request; // i don't need the request object here
@@ -39,4 +39,4 @@ class OnConnectionEvent extends WebsocketEvent {
   }
 }
 
-export default OnConnectionEvent;
+export default OnConnection;
