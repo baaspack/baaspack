@@ -42,10 +42,12 @@ export const generateModels = async (collectionsToCreate) => {
   const collectionNames = collectionsToCreate || await getCollectionNames();
 
   const appModels = collectionNames.reduce((obj, collectionName) => {
-    const mongooseModel = mongoose.model(collectionName, defaultSchema, collectionName);
+    if (collectionName !== 'uploads') {
+      const mongooseModel = mongoose.model(collectionName, defaultSchema, collectionName);
 
-    // eslint-disable-next-line no-param-reassign
-    obj[collectionName] = createAppModel(collectionName, mongooseModel);
+      // eslint-disable-next-line no-param-reassign
+      obj[collectionName] = createAppModel(collectionName, mongooseModel);
+    }
 
     return obj;
   }, {});
@@ -53,10 +55,12 @@ export const generateModels = async (collectionsToCreate) => {
   return appModels;
 };
 
+// TODO: unhandled promise error from mongoose.model()
+
 export const generateUploadsModel = () => {
   const model = mongoose.model('uploads', uploadsMetadataSchema);
   return createAppModel('uploads', model);
-}
+};
 
 export const seedDatabase = async () => {
   const collectionNames = ['Message'];

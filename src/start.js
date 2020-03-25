@@ -50,7 +50,6 @@ const start = async () => {
   // Generate endpoints for storage
   models.uploads = generateUploadsModel();
   createUploadsEndpoints(router, models.uploads);
-  console.log(models.uploads)
 
   const app = createExpressApp(router);
 
