@@ -93,21 +93,23 @@ const makeDir = (directory) => {
   }
 };
 
-const createUploadsEndpoints = (router, model) => {
-
-  const storage = multer.diskStorage({
+// currently allows you to save multiple copies of metadata for same file, but not multiple copies of file
+const createStorage = (model) => {
+  return multer.diskStorage({
     destination: (req, file, cb) => {
       const metadata = {
         bucket: req.body.bucket,
         userId: req.body.userId,
         filename: file.originalname,
       };
+      model.find({ filename: metadata.filename })
+        .then((file) => { console.log(!!file) })
 
       model.create(metadata)
         .then((resource) => {
           req.body.id = resource['_id'].toString();
-          console.log(req.body.id);
-          console.log(typeof req.body.id);
+          // console.log(req.body.id);
+          // console.log(typeof req.body.id);
         });
 
       makeDir(`${storagePath}/${req.body.userId}`);
@@ -116,20 +118,21 @@ const createUploadsEndpoints = (router, model) => {
     filename: (req, file, cb) => {
       //  TODO: change this to file name plus original name extension
       // What information do we have access to here? I can't seem to access body.id
+      // console.log('req.body.id: ' + req.body.id) // undefined
       cb(null, file.originalname);
     },
   });
+};
 
+const createUploadsEndpoints = (router, model) => {
+  const storage = createStorage(model);
   const upload = multer({ storage });
 
-  router.get(`${storageRoute}/:id`, errorHandlers.catchErrors(async (req, res) => {
-    console.log(req.params.bucket);
-    fs.readdir(`${storagePath}/${req.params.bucket}`, (err, files) => {
-      if (err) {
-        return err;
-      }
-      return res.json({ files: [...files] });
-    });
+  router.get(`${storageRoute}/:bucket`, errorHandlers.catchErrors(async (req, res) => {
+    model.find({ bucket: req.params.bucket })
+      .then((docs) => {
+        return res.json({ docs });
+      });
   }));
 
   router.post(`${storageRoute}`, upload.single('file'), errorHandlers.catchErrors(async (req, res) => {
@@ -137,9 +140,8 @@ const createUploadsEndpoints = (router, model) => {
     if (!file) {
       const error = new Error('Please upload a file');
       error.httpStatusCode = 400;
-      return next(error);
+      // return next(error);
     }
-    // this is currently returning an empty object
     res.json({ resourceName: file.originalname });
   }));
 };
