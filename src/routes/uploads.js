@@ -16,40 +16,33 @@ const makeDir = (directory) => {
   }
 };
 
-const createStorage = (model) => {
-  return multer.diskStorage({
-    destination: (req, file, cb) => {
-      const metadata = {
-        bucket: req.body.bucket,
-        userId: req.body.userId,
-        filename: file.originalname,
-      };
-      // Check to see if metadata record already exists. If it does, don't save it again.
-      // File system does not save multiple copies of same name, but db will otherwise.
-      model.find({ filename: metadata.filename, userId: metadata.userId })
-        .then((documents) => {
-          if (documents.length === 0) {
-            console.log('saving metadata')
-            model.create(metadata)
-              .then((resource) => {
-                // this isn't accessible in filename or route
-                req.body.id = resource['_id'].toString();
-              });
-          }
-        });
-
-      makeDir(`${storagePath}/${req.body.bucket}`);
-      cb(null, `${storagePath}/${req.body.bucket}`);
-    },
-    filename: (req, file, cb) => {
-      //  TODO: should we give it some other name? can't access mongo id from here.
-      cb(null, file.originalname);
-    },
-  });
+const saveMetadata = (metadata, model) => {
+  model.find({ filename: metadata.filename, userId: metadata.userId, bucket: metadata.bucket })
+    .then((documents) => {
+      if (documents.length === 0) {
+        console.log('saving metadata')
+        model.create(metadata)
+          .then((resource) => {
+            // this isn't accessible in filename or route
+            // req.body.id = resource['_id'].toString();
+            console.log(resource);
+          });
+      }
+    });
 };
 
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    makeDir(`${storagePath}/${req.body.bucket}`);
+    cb(null, `${storagePath}/${req.body.bucket}`);
+  },
+  filename: (req, file, cb) => {
+    cb(null, req.body.filename);
+  },
+});
+
 const createUploadsEndpoints = (router, model) => {
-  const storage = createStorage(model);
+  // const storage = createStorage(model);
   const upload = multer({ storage });
 
   router.get(`${storageRoute}/:bucket`, errorHandlers.catchErrors(async (req, res) => {
@@ -61,12 +54,20 @@ const createUploadsEndpoints = (router, model) => {
 
   router.post(`${storageRoute}`, upload.single('file'), errorHandlers.catchErrors(async (req, res) => {
     const { file } = req;
+    const fileData = {
+      userId: req.body.userId,
+      filename: req.body.filename,
+      bucket: req.body.bucket,
+    };
+
+    saveMetadata(fileData, model);
+
     if (!file) {
       const error = new Error('Please upload a file');
       error.httpStatusCode = 400;
       // return next(error);
     }
-    res.json({ resourceName: file.originalname });
+    res.json({ fileData });
   }));
 };
 
