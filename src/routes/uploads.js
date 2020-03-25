@@ -1,80 +1,3 @@
-// import fs from 'fs';
-// import multer from 'multer';
-// import errorHandlers from '../handlers/errorHandlers';
-
-// const storagePath = './public/uploads';
-// const storageRoute = '/uploads';
-// let uploadsModel = {};
-
-// const makeDir = (directory) => {
-//   try {
-//     fs.statSync(directory);
-//   } catch (e) {
-//     fs.mkdir(directory, { recursive: true }, (e) => {
-//       console.log('directory created');
-//       if (e) throw e;
-//     });
-//   }
-// };
-
-// const storage = multer.diskStorage({
-//   destination: (req, file, cb) => {
-//     const metadata = {
-//       bucket: req.body.bucket,
-//       userId: req.body.userId,
-//       filename: file.originalname,
-//     };
-
-//     uploadsModel.create(metadata)
-//       .then((resource) => {
-//         req.body.id = resource['_id'].toString();
-//         console.log(req.body.id);
-//         console.log(typeof req.body.id);
-//       });
-
-//     makeDir(`${storagePath}/${req.body.userId}`);
-//     cb(null, `${storagePath}/${req.body.userId}`);
-//   },
-//   filename: (req, file, cb) => {
-//     //  TODO: change this to file name plus original name extension
-//     // What information do we have access to here? I can't seem to access body.id
-//     cb(null, file.originalname);
-//   },
-// });
-
-// const upload = multer({ storage });
-
-// const addUploadsRoutes = (router) => {
-//   router.get(`${storageRoute}/:id`, errorHandlers.catchErrors(async (req, res) => {
-//     console.log(req.params.bucket);
-//     fs.readdir(`${storagePath}/${req.params.bucket}`, (err, files) => {
-//       if (err) {
-//         return err;
-//       }
-//       return res.json({ files: [...files] });
-//     });
-//   }));
-
-//   router.post(`${storageRoute}`, upload.single('file'), errorHandlers.catchErrors(async (req, res) => {
-//     const { file } = req;
-//     if (!file) {
-//       const error = new Error('Please upload a file');
-//       error.httpStatusCode = 400;
-//       return next(error);
-//     }
-//     // this is currently returning an empty object
-//     res.json({ resourceId: req.body.id });
-//   }));
-// };
-
-// const createUploadsEndpoints = (router, model) => {
-//   uploadsModel = model;
-//   addUploadsRoutes(router);
-// };
-
-// export default createUploadsEndpoints;
-
-
 import fs from 'fs';
 import multer from 'multer';
 import errorHandlers from '../handlers/errorHandlers';
@@ -93,7 +16,6 @@ const makeDir = (directory) => {
   }
 };
 
-// currently allows you to save multiple copies of metadata for same file, but not multiple copies of file
 const createStorage = (model) => {
   return multer.diskStorage({
     destination: (req, file, cb) => {
@@ -102,23 +24,25 @@ const createStorage = (model) => {
         userId: req.body.userId,
         filename: file.originalname,
       };
-      model.find({ filename: metadata.filename })
-        .then((file) => { console.log(!!file) })
-
-      model.create(metadata)
-        .then((resource) => {
-          req.body.id = resource['_id'].toString();
-          // console.log(req.body.id);
-          // console.log(typeof req.body.id);
+      // Check to see if metadata record already exists. If it does, don't save it again.
+      // File system does not save multiple copies of same name, but db will otherwise.
+      model.find({ filename: metadata.filename, userId: metadata.userId })
+        .then((documents) => {
+          if (documents.length === 0) {
+            console.log('saving metadata')
+            model.create(metadata)
+              .then((resource) => {
+                // this isn't accessible in filename or route
+                req.body.id = resource['_id'].toString();
+              });
+          }
         });
 
-      makeDir(`${storagePath}/${req.body.userId}`);
-      cb(null, `${storagePath}/${req.body.userId}`);
+      makeDir(`${storagePath}/${req.body.bucket}`);
+      cb(null, `${storagePath}/${req.body.bucket}`);
     },
     filename: (req, file, cb) => {
-      //  TODO: change this to file name plus original name extension
-      // What information do we have access to here? I can't seem to access body.id
-      // console.log('req.body.id: ' + req.body.id) // undefined
+      //  TODO: should we give it some other name? can't access mongo id from here.
       cb(null, file.originalname);
     },
   });
