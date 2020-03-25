@@ -16,25 +16,19 @@ const makeDir = (directory) => {
   }
 };
 
-const saveMetadata = (metadata, model) => {
-  model.find({ filename: metadata.filename, userId: metadata.userId, bucket: metadata.bucket })
-    .then((documents) => {
-      if (documents.length === 0) {
-        console.log('saving metadata')
-        model.create(metadata)
-          .then((resource) => {
-            // this isn't accessible in filename or route
-            // req.body.id = resource['_id'].toString();
-            console.log(resource);
-          });
-      }
-    });
+const saveMetadata = async (metadata, model) => {
+  const documents = await model.find({ filename: metadata.filename, userId: metadata.userId, bucket: metadata.bucket })
+  if (documents.length === 0) {
+    console.log('saving metadata');
+    return model.create(metadata);
+  }
 };
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    makeDir(`${storagePath}/${req.body.bucket}`);
-    cb(null, `${storagePath}/${req.body.bucket}`);
+    const path = `${storagePath}/${req.body.userId}`;
+    makeDir(path);
+    cb(null, path);
   },
   filename: (req, file, cb) => {
     cb(null, req.body.filename);
@@ -60,14 +54,15 @@ const createUploadsEndpoints = (router, model) => {
       bucket: req.body.bucket,
     };
 
-    saveMetadata(fileData, model);
+    const metadata = await saveMetadata(fileData, model);
+    console.log(metadata['_id'].toString());
 
     if (!file) {
       const error = new Error('Please upload a file');
       error.httpStatusCode = 400;
       // return next(error);
     }
-    res.json({ fileData });
+    res.json({ metadata });
   }));
 };
 
