@@ -11,13 +11,12 @@ const RedisStore = connectRedis(session);
 const redisClient = redis.createClient({ host: process.env.REDIS_HOSTNAME });
 
 redisClient.on('connect', () => {
-  console.log('Redis:', 'connected!')
+  console.log('Redis:', 'connected!');
 });
 
 redisClient.on('error', (err) => {
   console.error('Redis Connection Error:', err);
 });
-
 
 const createExpressApp = (routes, authRoutes, passport) => {
   const app = express();
