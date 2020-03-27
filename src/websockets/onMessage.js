@@ -91,7 +91,7 @@ class OnMessage extends Websocket {
     const model = this.models[collection];
     const response = await model.create(data);
 
-    this.wss.router.sendMessage(this.client, {
+    this.wss.router.broadcast({
       action: 'create',
       message: response,
     });
@@ -102,7 +102,7 @@ class OnMessage extends Websocket {
     const model = this.models[collection];
     const response = await model.update(id, data)
 
-    this.wss.router.sendMessage(this.client, {
+    this.wss.router.broadcast({
       action: 'update',
       message: response,
     });
@@ -113,7 +113,7 @@ class OnMessage extends Websocket {
     const model = this.models[collection];
     const response = await model.patch(id, data)
 
-    this.wss.router.sendMessage(this.client, {
+    this.wss.router.broadcast({
       action: 'patch',
       message: response,
     });
@@ -124,14 +124,10 @@ class OnMessage extends Websocket {
     const model = this.models[collection];
     const response = await model.delete(id);
 
-    this.wss.router.sendMessage(this.client, {
+    this.wss.router.broadcast({
       action: 'delete',
       message: response,
     });
-  }
-
-  broadcast = () => {
-    this.wss.broadcast(this.data);
   }
 
   open = () => {
