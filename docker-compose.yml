@@ -1,3 +1,5 @@
+# inspired by https://github.com/BretFisher/node-docker-good-defaults
+
 version: '2.4'
 
 services:
@@ -39,7 +41,7 @@ services:
       - MONGO_NON_ROOT_PASSWORD=sigh
       - MONGO_INITDB_DATABASE=baas
     volumes:
-      - ./src/db/mongoose/custom-user.sh:/docker-entrypoint-initdb.d/custom-user.sh:ro
+      - ./src/db/mongoose/custom-user.sh:/docker-entrypoint-initdb.d/custom-user.sh:ro # initialize a db w/ username and pass if none exists
       - mongo:/data/db
     healthcheck:
       test: "[ `echo 'db.runCommand(\"ping\").ok' | mongo localhost/baas --quiet` ] && echo 0 || echo 1"
