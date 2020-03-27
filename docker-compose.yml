@@ -23,6 +23,7 @@ services:
       - DB_HOSTNAME=mongo
       - DB_PORT=27017
       - DB_DBNAME=baas
+      - SEED_DB=true
     depends_on:
       mongo:
         condition: service_healthy
