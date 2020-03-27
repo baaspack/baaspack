@@ -16,16 +16,11 @@ const makeDir = (directory) => {
   }
 };
 
-// const saveFile = (directory, filename, file) => {
-//   makeDir(directory);
-//   fs.writeFile(filename, file);
-// }
-
 const saveMetadata = async (metadata, model) => {
   try {
-    const documents = await model.find({ filename: metadata.filename, userId: metadata.userId, bucket: metadata.bucket })
+    const data = { filename: metadata.filename, userId: metadata.userId, bucket: metadata.bucket };
+    const documents = await model.find(data);
     if (documents.length === 0) {
-      console.log('saving metadata');
       return model.create(metadata);
     }
   } catch (err) {
@@ -34,9 +29,8 @@ const saveMetadata = async (metadata, model) => {
 };
 
 const storage = multer.diskStorage({
-  destination: async (req, file, cb) => {
+  destination: (req, file, cb) => {
     const path = `${storagePath}/${req.body.userId}`;
-    await makeDir(path);
     cb(null, path);
   },
   filename: (req, file, cb) => {
@@ -61,27 +55,6 @@ const createUploadsEndpoints = (router, model) => {
       });
   }));
 
-  // HELP me with error handling in this function: file already exists, no file is uploaded...?
-  // router.post(`${storageRoute}`, upload.single('file'), errorHandlers.catchErrors(async (req, res) => {
-  //   if (!req.file) {
-  //     // const error = new Error('Please upload a file');
-  //     // error.httpStatusCode = 400;
-  //     // return next(error);
-  //     res.json({ error: 'no file' });
-  //     return;
-  //   }
-  //   const { file } = req;
-  //   const fileData = {
-  //     userId: req.body.userId,
-  //     filename: req.body.filename,
-  //     bucket: req.body.bucket,
-  //   };
-
-  //   const metadata = await saveMetadata(fileData, model);
-  //   console.log(metadata['_id'].toString());
-
-  //   res.json({ metadata });
-  // }));
   router.post(`${storageRoute}`, upload.single('file'), errorHandlers.catchErrors(async (req, res) => {
     const { file } = req;
 
@@ -89,7 +62,7 @@ const createUploadsEndpoints = (router, model) => {
       res.json({ error: 'no file' });
       return;
     }
-    res.json({ message: 'saved' });
+    res.json({ message: 'file saved' });
   }));
 
   router.post(`${storageRoute}/metadata`, upload.none(), errorHandlers.catchErrors(async (req, res) => {
@@ -106,8 +79,10 @@ const createUploadsEndpoints = (router, model) => {
       return;
     }
     const metadata = await saveMetadata(fileData, model);
+    const path = `${storagePath}/${req.body.userId}`;
+    makeDir(path);
 
-    res.status(200);
+    res.status(200).send('success!');
   }));
 
   // Handle ERRRorrrrssss!!!!
@@ -124,7 +99,6 @@ const createUploadsEndpoints = (router, model) => {
   }));
 
   // This method is just to update metadata and filename. It doesn't relace the file.
-
   router.patch(`${storageRoute}/:userId/:filename`, upload.none(), errorHandlers.catchErrors(async (req, res) => {
     const metadata = await model.find({ userId: req.params.userId, filename: req.params.filename });
     const id = metadata[0]['_id'].toString();
@@ -146,6 +120,16 @@ const createUploadsEndpoints = (router, model) => {
 
     res.json({ record });
   }));
+  router.put(`${storageRoute}/:userId/:filename`, upload.single('file'), errorHandlers.catchErrors(async (req, res) => {
+    const { file } = req;
+    console.log(req.body);
+    if (!file) {
+      res.json({ error: 'no file' });
+      return;
+    }
+    res.json({ message: 'saved' });
+  }));
+
 };
 
 export default createUploadsEndpoints;
