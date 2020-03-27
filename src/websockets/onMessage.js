@@ -53,7 +53,16 @@ class OnMessage extends Websocket {
     }
   }
 
-  find = () => { }
+  find = async () => {
+    const { collection, query } = this.data;
+    const model = this.models[collection];
+    const response = await model.find(query);
+
+    this.wss.router.sendMessage(this.client, {
+      action: 'find',
+      message: response,
+    });
+  }
 
   getOne = async () => {
     const { collection, id } = this.data;
