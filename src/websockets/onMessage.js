@@ -1,28 +1,31 @@
 import Websocket from './websocket';
-import { createDocument } from '../db/mongoose';
 
 class OnMessage extends Websocket {
-  constructor(wss, client, data) {
-    super(wss, client, data);
+  constructor(wss, client, data, models) {
+    super(wss, client);
+    this.models = models;
     this.data = data;
     this.actionRouter();
   }
 
   actionRouter = () => {
-    const name = this.action.data;
+    const name = this.data.action;
 
     switch (name) {
       case 'find':
         this.find();
         break;
-      case 'get':
-        this.get();
+      case 'getOne':
+        this.getOne();
         break;
-      case 'post':
-        this.post();
+      case 'getAll':
+        this.getAll();
         break;
-      case 'put':
-        this.put();
+      case 'create':
+        this.create();
+        break;
+      case 'update':
+        this.update();
         break;
       case 'patch':
         this.patch();
@@ -31,7 +34,7 @@ class OnMessage extends Websocket {
         this.delete();
         break;
       case 'broadcast':
-        this.broadcast();
+        this.wss.broadcast();
         break;
       case 'connection':
         this.connection();
@@ -43,67 +46,108 @@ class OnMessage extends Websocket {
         this.close();
         break;
       default:
-        this.sendMessage(this.client, {
-          action: error,
-          message: 'Error: action not provided.'
+        this.wss.router.sendMessage(this.client, {
+          action: 'error',
+          message: 'Error: valid action not provided.'
         });
     }
   }
 
-  find = () => {
+  find = () => { }
 
+  getOne = async () => {
+    const { collection, id } = this.data;
+    const model = this.models[collection];
+    const response = await model.get(id);
+
+    this.wss.router.sendMessage(this.client, {
+      action: 'getOne',
+      message: response,
+    });
   }
 
-  get = () => {
-    // handle request
-    // send it back to client
+  getAll = async () => {
+    const { collection } = this.data;
+    const model = this.models[collection];
+    const response = await model.find();
+
+    this.wss.router.sendMessage(this.client, {
+      action: 'getAll',
+      message: response,
+    });
   }
 
-  post = () => {
-    // handle request
-    // broadcast it to all
+  create = async () => {
+    const { collection, data } = this.data;
+    const model = this.models[collection];
+    const response = await model.create(data);
+
+    this.wss.router.sendMessage(this.client, {
+      action: 'create',
+      message: response,
+    });
   }
 
-  put = () => {
-    // handle request
-    // broadcast it to all
+  update = async () => {
+    const { collection, id, data } = this.data;
+    const model = this.models[collection];
+    const response = await model.update(id, data)
+
+    this.wss.router.sendMessage(this.client, {
+      action: 'update',
+      message: response,
+    });
   }
 
-  patch = () => {
-    // handle request
-    // broadcast it to all
+  patch = async () => {
+    const { collection, id, data } = this.data;
+    const model = this.models[collection];
+    const response = await model.patch(id, data)
+
+    this.wss.router.sendMessage(this.client, {
+      action: 'patch',
+      message: response,
+    });
   }
 
-  delete = () => {
-    // handle request
-    // broadcast it to all
+  delete = async () => {
+    const { collection, id } = this.data;
+    const model = this.models[collection];
+    const response = await model.delete(id);
+
+    this.wss.router.sendMessage(this.client, {
+      action: 'delete',
+      message: response,
+    });
   }
 
   broadcast = () => {
-    this.broadcast(this.data);
+    this.wss.broadcast(this.data);
   }
 
   open = () => {
-    // format message?
-    // broadcast it to all
+    this.setUserId();
+
+    this.wss.router.sendMessage(this.client, {
+      action: 'open',
+      message: "User's id has been associated with this connection."
+    })
+
+    this.wss.router.broadcast({
+      action: 'broadcast',
+      message: 'User joined',
+      userId: this.client.userId,
+    });
   }
 
   close = () => {
-    // format message?
-    // broadcast it to all
+
   }
 
-  saveMessage = async (data, type) => {
-    const collection = 'messages'; // what collection should message to? saving it to messages for now
-
-    const record = {
-      userId: this.userId,
-      [`${this.collectionName.toLowerCase()}Id`]: this.documentId,
-      data,
-      type,
-    };
-
-    console.log(await createDocument(collection, record));
+  setUserId = () => {
+    if (this.data.userId) {
+      this.client.userId = this.data.userId;
+    }
   }
 }
 

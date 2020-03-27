@@ -1,6 +1,6 @@
 import errorHandlers from '../handlers/errorHandlers';
 
-const createGenericRoutes = (model, wssRouter) => {
+const createGenericRoutes = (model, wss) => {
   const routes = [
     {
       type: 'get',
@@ -8,7 +8,6 @@ const createGenericRoutes = (model, wssRouter) => {
       handler: async (req, res) => {
         const resources = await model.find();
 
-        wssRouter.handleGetAll(resources);
         res.send(resources);
       },
     }, {
@@ -17,7 +16,6 @@ const createGenericRoutes = (model, wssRouter) => {
       handler: async (req, res) => {
         const resource = await model.get(req.params.id);
 
-        wssRouter.handleGetOne(resource);
         res.send(resource);
       },
     }, {
@@ -26,7 +24,7 @@ const createGenericRoutes = (model, wssRouter) => {
       handler: async (req, res) => {
         const resource = await model.create(req.body);
 
-        wssRouter.handlePost(resource);
+        wss.router.handlePost(resource);
         res.send(resource);
       },
     }, {
@@ -35,7 +33,7 @@ const createGenericRoutes = (model, wssRouter) => {
       handler: async (req, res) => {
         const resource = await model.patch(req.params.id, req.body);
 
-        wssRouter.handlePatch(resource);
+        wss.router.handlePatch(resource);
         res.send(resource);
       },
     }, {
@@ -44,7 +42,7 @@ const createGenericRoutes = (model, wssRouter) => {
       handler: async (req, res) => {
         const resource = await model.update(req.params.id, req.body);
 
-        wssRouter.handlePut(resource);
+        wss.router.handlePut(resource);
         res.send(resource);
       },
     }, {
@@ -53,7 +51,7 @@ const createGenericRoutes = (model, wssRouter) => {
       handler: async (req, res) => {
         const resource = await model.delete(req.params.id);
 
-        wssRouter.handleDelete(resource);
+        wss.router.handleDelete(resource);
         res.send(resource);
       },
     },

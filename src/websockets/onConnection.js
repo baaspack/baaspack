@@ -12,7 +12,7 @@ class OnConnection extends Websocket {
       message: 'Websocket connection established',
     };
 
-    this.sendMessage(this.client, message);
+    this.wss.router.sendMessage(this.client, message);
   }
 }
 
