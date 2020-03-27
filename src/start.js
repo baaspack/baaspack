@@ -21,7 +21,7 @@ import createExpressApp from './app';
 dotenv.config();
 
 // Set a flag for whether to reseed the database
-const repopulateSeedData = false;
+const repopulateSeedData = true;
 
 // Set DB connection options
 const dbConnectionOptions = {
