@@ -4,88 +4,93 @@ import { createDocument } from '../db/mongoose';
 class OnMessage extends Websocket {
   constructor(wss, client, data) {
     super(wss, client, data);
-    this.actionRouter(data.action);
+    this.data = data;
+    this.actionRouter();
   }
 
-  actionRouter = (action) => {
-    const { name, envelope } = action;
+  actionRouter = () => {
+    const name = this.action.data;
 
     switch (name) {
-      case 'send':
-        this.send(envelope)
+      case 'find':
+        this.find();
         break;
       case 'get':
-        this.get(envelope);
+        this.get();
         break;
-      case 'update':
-        this.update(envelope);
+      case 'post':
+        this.post();
         break;
-      case 'deleteData':
-        this.delete(envelope);
+      case 'put':
+        this.put();
         break;
-      case 'onOpen':
-        this.onOpen(envelope);
+      case 'patch':
+        this.patch();
         break;
-      case 'onClose':
-        this.onClose(envelope);
+      case 'delete':
+        this.delete();
         break;
-      case 'typing':
-        this.typing(envlope);
+      case 'broadcast':
+        this.broadcast();
         break;
-      case 'transfer':
-        this.transfer(envelop);
+      case 'connection':
+        this.connection();
+        break;
+      case 'open':
+        this.open();
+        break;
+      case 'close':
+        this.close();
         break;
       default:
+        this.sendMessage(this.client, {
+          action: error,
+          message: 'Error: action not provided.'
+        });
     }
   }
 
-  send = (envelope) => {
-    const { save, data, type, broadcast } = envelope;
-
-    if (save) {
-      this.saveMessage(data, type);
-    }
-
-    console.log('USER ID', this.userId)
-
-    const message = {
-      name: 'message',
-      envelope: {
-        from: this.userId,
-        data,
-        type,
-      },
-    };
-
-    this.broadcast(broadcast, message);
-  }
-
-  get = (envelope) => {
+  find = () => {
 
   }
 
-  update = (envelope) => {
-
+  get = () => {
+    // handle request
+    // send it back to client
   }
 
-  delete = (envelope) => {
-
+  post = () => {
+    // handle request
+    // broadcast it to all
   }
 
-  onOpen = (envelope) => {
-
+  put = () => {
+    // handle request
+    // broadcast it to all
   }
 
-  onClose = (envelope) => {
-
+  patch = () => {
+    // handle request
+    // broadcast it to all
   }
 
-  typing = (envelope) => {
-
+  delete = () => {
+    // handle request
+    // broadcast it to all
   }
 
-  transfer = (envelope) => {
+  broadcast = () => {
+    this.broadcast(this.data);
+  }
 
+  open = () => {
+    // format message?
+    // broadcast it to all
+  }
+
+  close = () => {
+    // format message?
+    // broadcast it to all
   }
 
   saveMessage = async (data, type) => {
