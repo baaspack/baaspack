@@ -1,9 +1,23 @@
 import express from 'express';
 import session from 'express-session';
 import cors from 'cors';
+import redis from 'redis';
+import connectRedis from 'connect-redis';
 
 import errorHandlers from './handlers/errorHandlers';
 import { hasApiKey } from './handlers/authorization';
+
+const RedisStore = connectRedis(session);
+const redisClient = redis.createClient({ host: process.env.REDIS_HOSTNAME });
+
+redisClient.on('connect', () => {
+  console.log('Redis:', 'connected!')
+});
+
+redisClient.on('error', (err) => {
+  console.error('Redis Connection Error:', err);
+});
+
 
 const createExpressApp = (routes, authRoutes, passport) => {
   const app = express();
@@ -19,6 +33,8 @@ const createExpressApp = (routes, authRoutes, passport) => {
 
   // Configure sessions
   app.use(session({
+    store: new RedisStore({ host: process.env.REDIS_HOSTNAME, port: 6379, client: redisClient }),
+    name: '_redis',
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: true,
