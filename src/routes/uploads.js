@@ -120,6 +120,8 @@ const createUploadsEndpoints = (router, model) => {
 
     res.json({ record });
   }));
+  // this endpoint overwrites file
+  // errors: 
   router.put(`${storageRoute}/:userId/:filename`, upload.single('file'), errorHandlers.catchErrors(async (req, res) => {
     const { file } = req;
     console.log(req.body);
