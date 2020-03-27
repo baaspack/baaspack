@@ -27,6 +27,8 @@ services:
       - DB_DBNAME=baas
       - SEED_DB=true
       - REDIS_HOSTNAME=redis
+      - API_KEY=anotherSuperSecretThing
+      - SESSION_SECRET=aSuperSecureString
     depends_on:
       mongo:
         condition: service_healthy
