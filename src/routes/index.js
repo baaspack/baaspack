@@ -1,6 +1,6 @@
 import errorHandlers from '../handlers/errorHandlers';
 
-const createGenericRoutes = (model) => {
+const createGenericRoutes = (model, wssRouter) => {
   const routes = [
     {
       type: 'get',
@@ -8,6 +8,7 @@ const createGenericRoutes = (model) => {
       handler: async (req, res) => {
         const resources = await model.find();
 
+        wssRouter.handleGetAll(resources);
         res.send(resources);
       },
     }, {
@@ -16,6 +17,7 @@ const createGenericRoutes = (model) => {
       handler: async (req, res) => {
         const resource = await model.get(req.params.id);
 
+        wssRouter.handleGetOne(resource);
         res.send(resource);
       },
     }, {
@@ -24,6 +26,7 @@ const createGenericRoutes = (model) => {
       handler: async (req, res) => {
         const resource = await model.create(req.body);
 
+        wssRouter.handlePost(resource);
         res.send(resource);
       },
     }, {
@@ -32,6 +35,7 @@ const createGenericRoutes = (model) => {
       handler: async (req, res) => {
         const resource = await model.patch(req.params.id, req.body);
 
+        wssRouter.handlePatch(resource);
         res.send(resource);
       },
     }, {
@@ -40,6 +44,7 @@ const createGenericRoutes = (model) => {
       handler: async (req, res) => {
         const resource = await model.update(req.params.id, req.body);
 
+        wssRouter.handlePut(resource);
         res.send(resource);
       },
     }, {
@@ -48,6 +53,7 @@ const createGenericRoutes = (model) => {
       handler: async (req, res) => {
         const resource = await model.delete(req.params.id);
 
+        wssRouter.handleDelete(resource);
         res.send(resource);
       },
     },
@@ -57,8 +63,8 @@ const createGenericRoutes = (model) => {
 };
 
 // TODO: Can we make this a pure function?
-const addRoutesFromModel = (router, model) => {
-  const routeObjects = createGenericRoutes(model);
+const addRoutesFromModel = (router, model, wss) => {
+  const routeObjects = createGenericRoutes(model, wss);
 
   routeObjects.forEach(({ type, path, handler }) => {
     const protectedHandler = errorHandlers.catchErrors(handler);

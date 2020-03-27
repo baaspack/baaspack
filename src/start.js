@@ -9,6 +9,7 @@ import {
 } from './db/mongoose';
 
 import startWebsocketServer from './websockets';
+import createWebsocketRouteHandlers from './websockets/routeHandlers';
 import addRoutesFromModel from './routes';
 import createCollectionEndpoints from './routes/collectionManager';
 import setupMiddleware from './app';
@@ -41,6 +42,8 @@ const start = async () => {
   // Start the websocket server
   const wss = startWebsocketServer(server);
 
+  wss.router = createWebsocketRouteHandlers(wss);
+
   // Connect to the db
   await connectToDb(dbConnectionOptions);
 
@@ -52,7 +55,7 @@ const start = async () => {
 
   Object.keys(models).forEach((modelName) => {
     const model = models[modelName];
-    addRoutesFromModel(router, model, wss);
+    addRoutesFromModel(router, model, wss.router);
   });
 
   // Generate endpoints for collections
