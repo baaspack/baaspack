@@ -26,8 +26,11 @@ services:
       - DB_PORT=27017
       - DB_DBNAME=baas
       - SEED_DB=true
+      - REDIS_HOSTNAME=redis
     depends_on:
       mongo:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
   mongo:
@@ -49,6 +52,11 @@ services:
       start_period: 10s
       timeout: 4s
       retries: 3
+
+  redis:
+    image: redis:alpine
+    healthcheck:
+      test: redis-cli ping
 
   mongo-express:
     image: mongo-express
