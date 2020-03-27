@@ -48,13 +48,6 @@ const createUploadsEndpoints = (router, model) => {
       });
   }));
 
-  router.get(`${storageRoute}/:userId`, errorHandlers.catchErrors(async (req, res) => {
-    model.find({ userId: req.params.userId })
-      .then((docs) => {
-        return res.json({ docs });
-      });
-  }));
-
   router.post(`${storageRoute}`, upload.single('file'), errorHandlers.catchErrors(async (req, res) => {
     const { file } = req;
 
@@ -75,7 +68,7 @@ const createUploadsEndpoints = (router, model) => {
     const existingRecord = await model.find({ userId: req.body.userId, filename: req.body.filename });
 
     if (existingRecord.length > 0) {
-      res.status(400).send('record already exists')
+      res.status(400).send('record already exists');
       return;
     }
     const metadata = await saveMetadata(fileData, model);
