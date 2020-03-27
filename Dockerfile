@@ -1,28 +1,22 @@
-FROM node:10-alpine as prod
+FROM node:10-alpine
 
-EXPOSE 3000
+ARG NODE_ENV=production
+ENV NODE_ENV $NODE_ENV
 
-ENV NODE_ENV=production
+ARG PORT=3000
+ENV PORT $PORT
+EXPOSE $PORT 9229 9230
 
 RUN mkdir /opt/node_app && chown node:node /opt/node_app
-
 WORKDIR /opt/node_app
 
 USER node
-
 COPY package*.json ./
+RUN npm install --no-optional && npm cache clean --force
 
-RUN npm install --only=prod && npm cache clean --force
+ENV PATH /opt/node_app/node_modules/.bin/:$PATH
 
+WORKDIR /opt/node_app/app
 COPY . .
 
 CMD ["node", "./src/start"]
-
-# DEV
-FROM prod as dev
-
-ENV NODE_ENV=development
-
-RUN npm install --only=dev && npm cache clean --force
-
-CMD ["./node_modules/nodemon/bin/nodemon.js", "--exec", "babel-node", "./src/start.js"]

@@ -19,12 +19,13 @@ export const getCollectionNames = async () => {
     .filter(({ name }) => !/user(s)?/i.test(name))
     .map(({ name }) => name);
 
-
   return collectionNames;
 };
 
-export const connectToDb = async ({ serverUrl, dbName }) => {
-  const connectionString = `${serverUrl}/${dbName}`;
+export const connectToDb = async ({ dbUsername, dbPassword, dbHostname, dbPort, dbName }) => {
+  const connectionString = `mongodb://${dbUsername}:${dbPassword}@${dbHostname}:${dbPort}/${dbName}`;
+
+  console.log(`Connecting to ${connectionString}`);
 
   try {
     await mongoose.connect(connectionString, {

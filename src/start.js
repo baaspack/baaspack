@@ -24,11 +24,12 @@ dotenv.config();
 const repopulateSeedData = false;
 
 // Set DB connection options
-const serverUrl = process.env.SERVER_URL.replace(/\/$/, ''); // remove closing "/" if it exists
-
 const dbConnectionOptions = {
-  serverUrl,
-  dbName: process.env.DATABASE_NAME,
+  dbUsername: process.env.DB_USERNAME,
+  dbPassword: process.env.DB_PASSWORD,
+  dbHostname: process.env.DB_HOSTNAME,
+  dbPort: process.env.DB_PORT,
+  dbName: process.env.DB_DBNAME,
 };
 
 // Start the App!
