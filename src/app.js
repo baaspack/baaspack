@@ -32,7 +32,7 @@ const createExpressApp = (routes, authRoutes, passport) => {
 
   // Configure sessions
   app.use(session({
-    store: new RedisStore({ host: process.env.REDIS_HOSTNAME, port: 6379, client: redisClient }),
+    store: new RedisStore({ client: redisClient }),
     name: '_redis',
     secret: process.env.SESSION_SECRET,
     resave: false,
