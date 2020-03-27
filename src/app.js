@@ -2,9 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import errorHandlers from './handlers/errorHandlers';
 
-const createExpressApp = (routes) => {
-  const app = express();
-
+const setupMiddleware = (app, routes) => {
   // Enable CORS from all origins
   app.use(cors());
 
@@ -31,8 +29,6 @@ const createExpressApp = (routes) => {
 
   // production error handler -- does not print stack trace
   app.use(errorHandlers.productionErrors);
-
-  return app;
 };
 
-export default createExpressApp;
+export default setupMiddleware;
