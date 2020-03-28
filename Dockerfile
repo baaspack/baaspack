@@ -1,6 +1,5 @@
 FROM node:10-alpine as base
 
-ENV NODE_ENV=production
 ENV PATH /opt/node_app/node_modules/.bin/:$PATH
 
 ARG PORT=3000
@@ -19,6 +18,18 @@ WORKDIR /opt/node_app/app
 
 CMD ["node", "./src/start"]
 
+# PROD Image
+FROM base as prod
+
+ENV NODE_ENV=production
+
+COPY . .
+
+# DEV IMAGE
+# Multistage builds don't skip unused stages without
+# using buildkit, but that requires additional config
+# which I'm not sure we can guarantee yet. Keeping dev
+# last here so that prod is at least slim.
 FROM base as dev
 
 ENV NODE_ENV=development
@@ -26,7 +37,3 @@ ENV NODE_ENV=development
 RUN npm install --only=development
 
 CMD ["nodemon", "--exec", "babel-node", "./src/start"]
-
-FROM base as prod
-
-COPY . .
