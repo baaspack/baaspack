@@ -6,13 +6,13 @@ services:
   baas:
     build:
       context: .
+      target: dev
       args:
-        - NODE_ENV=development
+        - PORT=3000
     ports:
       - "3000:3000"
       - "9229:9229"
       - "9230:9230"
-    command: nodemon --exec babel-node ./src/start.js
     volumes:
       - .:/opt/node_app/app:delegated
       - ./package.json:/opt/node_app/package.json
@@ -25,7 +25,7 @@ services:
       - DB_HOSTNAME=mongo
       - DB_PORT=27017
       - DB_DBNAME=baas
-      - SEED_DB=true
+      - SEED_DB=false
       - REDIS_HOSTNAME=redis
       - API_KEY=anotherSuperSecretThing
       - SESSION_SECRET=aSuperSecureString
