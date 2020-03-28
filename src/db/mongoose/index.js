@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import defaultSchema from './defaultSchema';
+import uploadsMetadataSchema from './uploadsMetadataSchema';
 import createAppModel from './MongooseModel';
 import fillDbWithSeedData from '../seedData';
 import MongooseUser from './models/User';
@@ -17,6 +18,7 @@ export const getCollectionNames = async () => {
 
   const collectionNames = collections
     .filter(({ name }) => !/user(s)?/i.test(name))
+    .filter(({ name }) => !/uploads/i.test(name))
     .map(({ name }) => name);
 
   return collectionNames;
@@ -53,6 +55,13 @@ export const generateModels = async (collectionsToCreate) => {
   const appModels = collectionNames.map(generateModel);
 
   return appModels;
+};
+
+// TODO: unhandled promise error from mongoose.model()
+
+export const generateUploadsModel = () => {
+  const model = mongoose.model('uploads', uploadsMetadataSchema);
+  return createAppModel('uploads', model);
 };
 
 export const seedDatabase = async () => {

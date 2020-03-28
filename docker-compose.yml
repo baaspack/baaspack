@@ -19,7 +19,6 @@ services:
       - ./package-lock.json:/opt/node_app/package-lock.json
       - notused:/opt/node_app/app/node_modules
     environment:
-      - NODE_ENV=development
       - DB_USERNAME=baas
       - DB_PASSWORD=sigh
       - DB_HOSTNAME=mongo

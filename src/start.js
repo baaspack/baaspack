@@ -5,6 +5,7 @@ import {
   connectToDb,
   generateModel,
   generateModels,
+  generateUploadsModel,
   seedDatabase,
   getCollectionNames,
   User,
@@ -15,6 +16,7 @@ import createAuthRoutes from './routes/authentication';
 
 import addRoutesFromModel from './routes';
 import createCollectionEndpoints from './routes/collectionManager';
+import createUploadsEndpoints from './routes/uploads';
 import createExpressApp from './app';
 
 // Import variables from .env to make them available on `process.env`
@@ -53,6 +55,10 @@ const start = async () => {
 
   // Generate endpoints for collections
   createCollectionEndpoints(router, getCollectionNames, generateModel, addRoutesFromModel);
+
+  // Generate endpoints for storage
+  models.uploads = generateUploadsModel();
+  createUploadsEndpoints(router, models.uploads);
 
   const app = createExpressApp(router, authRoutes, passport);
 

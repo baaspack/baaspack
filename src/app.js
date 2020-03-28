@@ -4,6 +4,7 @@ import cors from 'cors';
 import redis from 'redis';
 import connectRedis from 'connect-redis';
 
+
 import errorHandlers from './handlers/errorHandlers';
 import { hasApiKey } from './handlers/authorization';
 
@@ -51,6 +52,12 @@ const createExpressApp = (routes, authRoutes, passport) => {
   // Configure routes for collections w/ error handling built-in
   app.use(authRoutes);
   app.use(routes);
+
+  // serve static files from public directory
+  app.use(express.static('public/uploads'));
+  app.use(express.static('public'));
+  // app.use('/static', express.static(path.join(__dirname, 'public')));
+  // app.use('/static', express.static(__dirname + '/public'));
 
   // 404 response for requests that didn't hit a route
   app.use(errorHandlers.notFound);
