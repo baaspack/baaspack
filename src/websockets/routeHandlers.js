@@ -1,24 +1,22 @@
 const createWebsocketRouteHandlers = (wss) => {
+  const unfreezeObject = (obj) => JSON.parse(JSON.stringify(obj));
+
   const handlers = {
     handlePost(collection, data) {
-      data.action = 'post';
-      data.collection = collection;
-      this.broadcast(data);
+      const dataCopy = unfreezeObject(data);
+      this.broadcast(Object.assign({}, { action: 'create', collection, response: dataCopy }));
     },
     handlePut(collection, data) {
-      data.action = 'put';
-      data.collection = collection;
-      this.broadcast(data);
+      const dataCopy = unfreezeObject(data);
+      this.broadcast(Object.assign({}, { action: 'update', collection, response: dataCopy }));
     },
     handlePatch(collection, data) {
-      data.action = 'patch';
-      data.collection = collection;
-      this.broadcast(data);
+      const dataCopy = unfreezeObject(data);
+      this.broadcast(Object.assign({}, { action: 'patch', collection, response: dataCopy }));
     },
     handleDelete(collection, data) {
-      data.action = 'delete';
-      data.collection = collection;
-      this.broadcast(data);
+      const dataCopy = unfreezeObject(data);
+      this.broadcast(Object.assign({}, { action: 'delete', collection, response: dataCopy }));
     },
     sendMessage(client, message) {
       client.send(JSON.stringify(message));
