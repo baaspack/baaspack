@@ -1,19 +1,23 @@
 const createWebsocketRouteHandlers = (wss) => {
   const handlers = {
-    handlePost(data) {
+    handlePost(collection, data) {
       data.action = 'post';
+      data.collection = collection;
       this.broadcast(data);
     },
-    handlePatch(data) {
-      data.action = 'patch';
-      this.broadcast(data);
-    },
-    handlePut(data) {
+    handlePut(collection, data) {
       data.action = 'put';
+      data.collection = collection;
       this.broadcast(data);
     },
-    handleDelete(data) {
+    handlePatch(collection, data) {
+      data.action = 'patch';
+      data.collection = collection;
+      this.broadcast(data);
+    },
+    handleDelete(collection, data) {
       data.action = 'delete';
+      data.collection = collection;
       this.broadcast(data);
     },
     sendMessage(client, message) {

@@ -47,9 +47,6 @@ const start = async () => {
 
   // Start the websocket server
   const wss = startWebsocketServer(server, models);
-  // wss.router = createWebsocketRouteHandlers(wss);
-
-  // console.log('WSS FROM START', wss);
 
   // Generate HTTP endpoints for routes
   const router = Router();

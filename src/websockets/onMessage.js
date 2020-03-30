@@ -1,159 +1,160 @@
-import Websocket from './websocket';
-
-class OnMessage extends Websocket {
-  constructor(wss, client, data, models) {
-    super(wss, client);
-    this.models = models;
-    this.data = data;
-    this.actionRouter();
-  }
-
-  actionRouter = () => {
-    const name = this.data.action;
-
-    switch (name) {
-      case 'find':
-        this.find();
-        break;
-      case 'getOne':
-        this.getOne();
-        break;
-      case 'getAll':
-        this.getAll();
-        break;
-      case 'create':
-        this.create();
-        break;
-      case 'update':
-        this.update();
-        break;
-      case 'patch':
-        this.patch();
-        break;
-      case 'delete':
-        this.delete();
-        break;
-      case 'broadcast':
-        this.wss.broadcast();
-        break;
-      case 'connection':
-        this.connection();
-        break;
-      case 'open':
-        this.open();
-        break;
-      case 'close':
-        this.close();
-        break;
-      default:
-        this.wss.router.sendMessage(this.client, {
-          action: 'error',
-          message: 'Error: valid action not provided.'
-        });
-    }
-  }
-
-  find = async () => {
-    const { collection, query } = this.data;
-    const model = this.models[collection];
+const onMessage = (wss, client, message, models) => {
+  const find = async () => {
+    const { action, collection, query } = message;
+    const model = models[collection];
     const response = await model.find(query);
 
-    this.wss.router.sendMessage(this.client, {
-      action: 'find',
-      message: response,
+    wss.router.sendMessage(client, {
+      action,
+      response: response,
     });
   }
 
-  getOne = async () => {
-    const { collection, id } = this.data;
-    const model = this.models[collection];
+  const getOne = async () => {
+    const { action, collection, id } = message;
+    const model = models[collection];
     const response = await model.get(id);
 
-    this.wss.router.sendMessage(this.client, {
-      action: 'getOne',
-      message: response,
+    wss.router.sendMessage(client, {
+      action,
+      collection: collection,
+      response: response,
     });
   }
 
-  getAll = async () => {
-    const { collection } = this.data;
-    const model = this.models[collection];
+  // works with sdk
+  const getAll = async () => {
+    const { action, collection } = message;
+    const model = models[collection];
     const response = await model.find();
 
-    this.wss.router.sendMessage(this.client, {
-      action: 'getAll',
-      message: response,
+    wss.router.sendMessage(client, {
+      action,
+      collection,
+      response: response,
     });
   }
 
-  create = async () => {
-    const { collection, data } = this.data;
-    const model = this.models[collection];
+  // works with sdk
+  const create = async () => {
+    const { action, collection, data } = message;
+    const model = models[collection];
     const response = await model.create(data);
 
-    this.wss.router.broadcast({
-      action: 'create',
-      message: response,
+    wss.router.broadcast({
+      action,
+      collection,
+      response: response,
     });
   }
 
-  update = async () => {
-    const { collection, id, data } = this.data;
-    const model = this.models[collection];
+  // works with sdk
+  const update = async () => {
+    const { action, collection, id, data } = message;
+    const model = models[collection];
     const response = await model.update(id, data)
 
-    this.wss.router.broadcast({
-      action: 'update',
-      message: response,
+    wss.router.broadcast({
+      action,
+      collection,
+      response: response,
     });
   }
 
-  patch = async () => {
-    const { collection, id, data } = this.data;
-    const model = this.models[collection];
+  const patch = async () => {
+    const { action, collection, id, data } = message;
+    const model = models[collection];
     const response = await model.patch(id, data)
 
-    this.wss.router.broadcast({
-      action: 'patch',
-      message: response,
+    wss.router.broadcast({
+      action,
+      collection,
+      response: response,
     });
   }
 
-  delete = async () => {
-    const { collection, id } = this.data;
-    const model = this.models[collection];
+  // works with sdk
+  const deleted = async () => {
+    const { collection, id } = message;
+    const model = models[collection];
     const response = await model.delete(id);
 
-    this.wss.router.broadcast({
-      action: 'delete',
-      message: response,
+    wss.router.broadcast({
+      action,
+      collection,
+      response: response,
     });
   }
 
-  open = () => {
-    this.setUserId();
+  const open = () => {
+    const { action } = message;
+    setUserId();
 
-    this.wss.router.sendMessage(this.client, {
-      action: 'open',
-      message: "User's id has been associated with this connection."
+    wss.router.sendMessage(client, {
+      action,
+      response: "User's id has been associated with this connection."
     })
+  }
 
-    this.wss.router.broadcast({
-      action: 'broadcast',
-      message: 'User joined',
-      userId: this.client.userId,
+  const close = () => {
+    const { action } = message;
+
+    wss.router.broadcast({
+      action,
+      userId: client.userId,
     });
   }
 
-  close = () => {
-
+  const setUserId = () => {
+    if (message.userId) {
+      client.userId = message.userId;
+    }
   }
 
-  setUserId = () => {
-    if (this.data.userId) {
-      this.client.userId = this.data.userId;
-    }
+  const { action } = message;
+
+  console.log('MESSAGE FROM ONMESSAGE', message);
+
+  switch (action) {
+    case 'find':
+      find();
+      break;
+    case 'getOne':
+      getOne();
+      break;
+    case 'getAll':
+      getAll();
+      break;
+    case 'create':
+      create();
+      break;
+    case 'update':
+      update();
+      break;
+    case 'patch':
+      patch();
+      break;
+    case 'delete':
+      deleted();
+      break;
+    case 'broadcast':
+      wss.broadcast();
+      break;
+    case 'connection':
+      connection();
+      break;
+    case 'open':
+      open();
+      break;
+    case 'close':
+      close();
+      break;
+    default:
+      wss.router.sendMessage(client, {
+        action: 'error',
+        message: 'Error: valid action not provided.'
+      });
   }
 }
 
-export default OnMessage;
+export default onMessage;

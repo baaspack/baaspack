@@ -24,6 +24,8 @@ const createAppModel = (name, mongooseModel) => {
     // also updated the createdAt timestamp... not sure we want that
     // but maybe that's expected behavior for a PUT
     async update(id, data) {
+      console.log('FROM MONGOOSE MODEL UPDATE ID', id);
+      console.log('FROM MONGOOSE MODEL UPDATE DATA', data);
       await mongooseModel.replaceOne(
         { _id: id },
         data,

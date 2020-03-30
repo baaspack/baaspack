@@ -1,24 +1,45 @@
 import WebSocket from 'ws';
 import createWebsocketRouteHandlers from './routeHandlers';
-import OnConnection from './OnConnection';
-import OnMessage from './OnMessage';
-import OnClose from './OnClose';
+import onConnection from './OnConnection';
+import onMessage from './OnMessage';
+import onClose from './OnClose';
 
 const startWebsocketServer = (server, models) => {
   const wss = new WebSocket.Server({ server });
   wss.router = createWebsocketRouteHandlers(wss);
 
+  // function noop() { }
+
+  // function heartbeat() {
+  //   this.isAlive = true;
+  // }
+
   wss.on('connection', (client) => {
-    new OnConnection(wss, client);
+    // client.isAlive = true;
+    // client.on('pong', heartbeat);
+    onConnection(wss, client);
 
     client.on('message', (data) => {
-      new OnMessage(wss, client, JSON.parse(data), models);
+      onMessage(wss, client, JSON.parse(data), models);
     });
 
     client.on('close', (data) => {
-      new OnClose(wss, client, JSON.parse(data));
+      onClose(wss, client, JSON.parse(data));
     });
   });
+
+  // const interval = setInterval(function ping() {
+  //   wss.clients.forEach(function each(client) {
+  //     if (client.isAlive === false) return client.terminate();
+
+  //     client.isAlive = false;
+  //     client.ping(noop);
+  //   });
+  // }, 30000);
+
+  // wss.on('close', () => {
+  //   clearInterval(interval);
+  // });
 
   return wss;
 }

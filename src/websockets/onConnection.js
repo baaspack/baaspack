@@ -1,19 +1,10 @@
-import Websocket from './websocket';
+const onConnection = (wss, client) => {
+  const message = {
+    action: 'connection',
+    response: 'Websocket connection established',
+  };
 
-class OnConnection extends Websocket {
-  constructor(wss, client) {
-    super(wss, client);
-    this.response();
-  }
-
-  response = () => {
-    const message = {
-      action: 'connection',
-      message: 'Websocket connection established',
-    };
-
-    this.wss.router.sendMessage(this.client, message);
-  }
+  wss.router.sendMessage(client, message);
 }
 
-export default OnConnection;
+export default onConnection;

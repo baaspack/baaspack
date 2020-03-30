@@ -1,9 +1,10 @@
-import Websocket from './websocket';
+const onClose = (wss, client, data) => { // do I need data?
+  const message = {
+    action: 'close',
+    userId: client.userId,
+  };
 
-class OnClose extends Websocket {
-  constructor(wss, client, data) {
-    super(wss, client, data);
-  }
+  wss.router.broadcast(client, message);
 }
 
-export default OnClose;
+export default onClose;

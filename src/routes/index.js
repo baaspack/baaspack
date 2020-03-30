@@ -24,16 +24,7 @@ const createGenericRoutes = (model, wss) => {
       handler: async (req, res) => {
         const resource = await model.create(req.body);
 
-        wss.router.handlePost(resource);
-        res.send(resource);
-      },
-    }, {
-      type: 'patch',
-      path: `/${model.name}/:id`,
-      handler: async (req, res) => {
-        const resource = await model.patch(req.params.id, req.body);
-
-        wss.router.handlePatch(resource);
+        wss.router.handlePost(model.name, resource);
         res.send(resource);
       },
     }, {
@@ -42,7 +33,16 @@ const createGenericRoutes = (model, wss) => {
       handler: async (req, res) => {
         const resource = await model.update(req.params.id, req.body);
 
-        wss.router.handlePut(resource);
+        wss.router.handlePut(model.name, resource);
+        res.send(resource);
+      },
+    }, {
+      type: 'patch',
+      path: `/${model.name}/:id`,
+      handler: async (req, res) => {
+        const resource = await model.patch(req.params.id, req.body);
+
+        wss.router.handlePatch(model.name, resource);
         res.send(resource);
       },
     }, {
@@ -51,7 +51,7 @@ const createGenericRoutes = (model, wss) => {
       handler: async (req, res) => {
         const resource = await model.delete(req.params.id);
 
-        wss.router.handleDelete(resource);
+        wss.router.handleDelete(model.name, resource);
         res.send(resource);
       },
     },
