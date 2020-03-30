@@ -18,6 +18,8 @@ services:
       - ./package.json:/opt/node_app/package.json
       - ./package-lock.json:/opt/node_app/package-lock.json
       - notused:/opt/node_app/app/node_modules
+      # - ./public/uploads:/opt/node_app/public/uploads
+      - storage:/opt/node_app/public/uploads
     environment:
       - DB_USERNAME=baas
       - DB_PASSWORD=sigh
@@ -71,3 +73,6 @@ services:
 volumes:
   notused:
   mongo:
+  storage:
+
+
