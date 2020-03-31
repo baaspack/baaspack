@@ -1,8 +1,8 @@
 import WebSocket from 'ws';
 import createWebsocketRouteHandlers from './routeHandlers';
-import onConnection from './OnConnection';
-import onMessage from './OnMessage';
-import onClose from './OnClose';
+import onConnection from './onConnection';
+import onMessage from './onMessage';
+import onClose from './onClose';
 
 const startWebsocketServer = (server, models) => {
   const wss = new WebSocket.Server({ server });
