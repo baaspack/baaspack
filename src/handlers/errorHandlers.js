@@ -36,9 +36,11 @@ const notFound = (req, res, next) => {
 
 const validationErrors = (err, req, res, next) => {
   // Validation errors appear as err.errors
-  if (!err.errors) return next(err);
+  // Duplicate entries to a table with a unique index
+  // have a err.name property === 'MongoError'.
+  if (!err.errors && err.name !== 'MongoError') return next(err);
 
-  res.json(err.errors);
+  res.status(422).json(err.errors || { message: 'invalid entry' });
 };
 
 /*

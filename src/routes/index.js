@@ -1,4 +1,5 @@
 import errorHandlers from '../handlers/errorHandlers';
+import { checkAuthenticated } from '../handlers/authorization';
 
 const createGenericRoutes = (model, wss) => {
   const routes = [
@@ -66,7 +67,10 @@ const addRoutesFromModel = (router, model, wss) => {
 
   routeObjects.forEach(({ type, path, handler }) => {
     const protectedHandler = errorHandlers.catchErrors(handler);
-    router[type](path, protectedHandler);
+
+    // TODO: Selective authorization? With verifyToken here,
+    // all requests will require authorization
+    router[type](path, checkAuthenticated, protectedHandler);
   });
 };
 
