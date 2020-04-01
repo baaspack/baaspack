@@ -1,0 +1,68 @@
+# inspired by https://github.com/BretFisher/node-docker-good-defaults
+
+version: '3.7'
+
+services:
+  backpack:
+    image: backpack:prod
+    deploy:
+      replicas: 1
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=proxy
+        - traefik.http.routers.${BPNAME}.rule=Host(`${BPNAME}.localhost`)
+        - traefik.http.services.${BPNAME}.loadbalancer.server.port=3000
+      update_config:
+        failure_action: rollback
+        order: start-first
+    environment:
+      - DB_USERNAME=baas
+      - DB_PASSWORD=sigh
+      - DB_HOSTNAME=mongo
+      - DB_PORT=27017
+      - DB_DBNAME=baas
+      - SEED_DB=false
+      - REDIS_HOSTNAME=redis
+      - API_KEY=anotherSuperSecretThing
+      - SESSION_SECRET=aSuperSecureString
+    depends_on:
+      - mongo
+      - redis
+    networks:
+      - backpack
+      - proxy
+
+  mongo:
+    image: mongo
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=example
+      - MONGO_NON_ROOT_USERNAME=baas
+      - MONGO_NON_ROOT_PASSWORD=sigh
+      - MONGO_INITDB_DATABASE=baas
+    volumes:
+      - ./src/db/mongoose/custom-user.sh:/docker-entrypoint-initdb.d/custom-user.sh:ro # initialize a db w/ username and pass if none exists
+      - mongo:/data/db
+    networks:
+      - backpack
+    # healthcheck:
+    #   test: "[ `echo 'db.runCommand(\"ping\").ok' | mongo localhost/baas --quiet` ] && echo 0 || echo 1"
+    #   interval: 5s
+    #   start_period: 10s
+    #   timeout: 4s
+    #   retries: 3
+
+  redis:
+    image: redis:alpine
+    healthcheck:
+      test: redis-cli ping
+    networks:
+      - backpack
+
+volumes:
+  mongo:
+
+networks:
+  backpack:
+  proxy:
+    external: true
