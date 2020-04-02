@@ -16,8 +16,8 @@ const getCollections = async () => {
     .listCollections()
     .toArray();
 
-  return collections
-}
+  return collections;
+};
 
 export const getCollectionNames = async () => {
   const collections = await getCollections();
@@ -41,7 +41,6 @@ export const connectToDb = async ({ dbUsername, dbPassword, dbHostname, dbPort, 
       useUnifiedTopology: true,
       useFindAndModify: false,
       useCreateIndex: true,
-      authSource: 'admin',
     });
 
     console.log(`Connected to ${connectionString}`);
