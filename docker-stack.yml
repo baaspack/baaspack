@@ -28,23 +28,23 @@ services:
     depends_on:
       - mongo
       - redis
+    volumes:
+      - storage:/opt/node_app/public/uploads
     networks:
       - backpack
       - proxy
 
   mongo:
-    image: mongo
+    image: bitnami/mongodb:4.2.5
+    ports:
+      - "27017:27017"
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=root
-      - MONGO_INITDB_ROOT_PASSWORD=example
-      - MONGO_NON_ROOT_USERNAME=baas
-      - MONGO_NON_ROOT_PASSWORD=sigh
-      - MONGO_INITDB_DATABASE=baas
+      - MONGODB_ROOT_PASSWORD=aLongButNotRandomString
+      - MONGODB_USERNAME=baas
+      - MONGODB_PASSWORD=sigh
+      - MONGODB_DATABASE=baas
     volumes:
-      - ./src/db/mongoose/custom-user.sh:/docker-entrypoint-initdb.d/custom-user.sh:ro # initialize a db w/ username and pass if none exists
-      - ${BPNAME}-mongo:/data/db
-    networks:
-      - backpack
+      - mongo:/bitnami
     # healthcheck:
     #   test: "[ `echo 'db.runCommand(\"ping\").ok' | mongo localhost/baas --quiet` ] && echo 0 || echo 1"
     #   interval: 5s
