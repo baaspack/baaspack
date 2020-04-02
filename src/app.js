@@ -41,7 +41,7 @@ const setupMiddleware = (app, routes, authRoutes, passport) => {
   }));
 
   // Early exit if a request doesn't include an auth header
-  // app.use(hasApiKey);
+  app.use(hasApiKey);
 
   app.use(passport.initialize());
   app.use(passport.session());
