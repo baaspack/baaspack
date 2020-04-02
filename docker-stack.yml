@@ -42,7 +42,7 @@ services:
       - MONGO_INITDB_DATABASE=baas
     volumes:
       - ./src/db/mongoose/custom-user.sh:/docker-entrypoint-initdb.d/custom-user.sh:ro # initialize a db w/ username and pass if none exists
-      - mongo:/data/db
+      - ${BPNAME}-mongo:/data/db
     networks:
       - backpack
     # healthcheck:
