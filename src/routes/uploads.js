@@ -5,32 +5,60 @@ import errorHandlers from '../handlers/errorHandlers';
 const storagePath = './public/uploads';
 const storageRoute = '/uploads';
 
-const makeDir = (directory) => {
-  try {
-    fs.statSync(directory);
-  } catch (e) {
-    fs.mkdir(directory, { recursive: true }, (e) => {
-      console.log('directory created');
-      if (e) throw e;
-    });
+const getFileData = (req) => {
+  const fileData = {
+    userId: req.body.userId,
+    filename: req.body.filename,
+    bucket: req.body.bucket,
+  };
+  return fileData;
+};
+
+const getRecord = async (model, filename, userId) => {
+  const record = await model.find({ userId, filename });
+  return record[0] || null;
+};
+
+const getIdFromRecord = (record) => {
+  if (record) {
+    return record['_id'].toString();
   }
+};
+
+const makeDir = (directory) => {
+  fs.mkdirSync(directory, { recursive: true });
 };
 
 const saveMetadata = async (metadata, model) => {
   try {
     const data = { filename: metadata.filename, userId: metadata.userId, bucket: metadata.bucket };
     const documents = await model.find(data);
+
     if (documents.length === 0) {
       return model.create(metadata);
     }
   } catch (err) {
-    return ({ error: 'File already exists' });
+    return ({ error: err });
   }
 };
 
+const updateFilename = async (metadata, req) => {
+  if (metadata.filename !== req.body.filename) {
+    const oldName = `${storagePath}/${req.params.userId}/${metadata.filename}`;
+    const newName = `${storagePath}/${req.params.userId}/${req.body.filename}`;
+
+    fs.rename(oldName, newName, ((err) => {
+      console.log(err);
+    }));
+  }
+
+  return req.body.filename;
+};
+
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
+  destination: async (req, file, cb) => {
     const path = `${storagePath}/${req.body.userId}`;
+    await makeDir(path);
     cb(null, path);
   },
   filename: (req, file, cb) => {
@@ -38,9 +66,9 @@ const storage = multer.diskStorage({
   },
 });
 
-const createUploadsEndpoints = (router, model) => {
-  const upload = multer({ storage });
+const upload = multer({ storage });
 
+const createUploadsEndpoints = (router, model) => {
   router.get(`${storageRoute}/:userId`, errorHandlers.catchErrors(async (req, res) => {
     model.find({ userId: req.params.userId })
       .then((docs) => {
@@ -48,81 +76,59 @@ const createUploadsEndpoints = (router, model) => {
       });
   }));
 
-  router.post(`${storageRoute}`, upload.single('file'), errorHandlers.catchErrors(async (req, res) => {
+  router.post(`${storageRoute}/:userId`, upload.single('file'), errorHandlers.catchErrors(async (req, res) => {
     const { file } = req;
 
     if (!file) {
-      res.json({ error: 'no file' });
-      return;
+      return res.status(400).send({ message: 'no file uploaded' });
     }
-    res.json({ message: 'file saved' });
-  }));
 
-  router.post(`${storageRoute}/metadata`, upload.none(), errorHandlers.catchErrors(async (req, res) => {
-    const fileData = {
-      userId: req.body.userId,
-      filename: req.body.filename,
-      bucket: req.body.bucket,
-    };
+    const fileData = await getFileData(req);
+    const record = await getRecord(model, req.body.filename, req.body.userId);
+    const id = await getIdFromRecord(record);
 
-    const existingRecord = await model.find({ userId: req.body.userId, filename: req.body.filename });
-
-    if (existingRecord.length > 0) {
-      res.status(400).send('record already exists');
-      return;
+    if (id) {
+      const updatedRecord = await model.patch(id, fileData);
+      return res.json({ updatedRecord });
     }
     const metadata = await saveMetadata(fileData, model);
-    const path = `${storagePath}/${req.body.userId}`;
-    makeDir(path);
 
-    res.status(200).send('success!');
+    return res.json(metadata);
   }));
 
-  // Handle ERRRorrrrssss!!!!
   router.delete(`${storageRoute}/:userId/:filename`, errorHandlers.catchErrors(async (req, res) => {
-    const metadata = await model.find({ userId: req.params.userId, filename: req.params.filename });
-    const id = metadata[0]['_id'].toString();
+    const record = await getRecord(model, req.params.filename, req.params.userId);
+    const id = await getIdFromRecord(record);
     const deletedRecord = await model.delete(id);
 
     fs.unlink(`${storagePath}/${req.params.userId}/${req.params.filename}`, (err) => {
-      console.log(err)
+      console.log(err);
     });
 
     res.json({ deletedRecord });
   }));
 
-  // This method is just to update metadata and filename. It doesn't relace the file.
+  // Update metadata and filename. Does not relace the file.
   router.patch(`${storageRoute}/:userId/:filename`, upload.none(), errorHandlers.catchErrors(async (req, res) => {
-    const metadata = await model.find({ userId: req.params.userId, filename: req.params.filename });
-    const id = metadata[0]['_id'].toString();
+    const metadata = await getRecord(model, req.params.filename, req.params.userId);
+    const id = await getIdFromRecord(metadata);
+    const fileData = getFileData(req);
+    const record = await model.patch(id, { filename: fileData.filename, bucket: fileData.bucket });
 
-    // if it is the filename that should be changed, change it in the filesystem
-    if (metadata[0].filename !== req.body.filename) {
-      const oldName = `${storagePath}/${req.params.userId}/${metadata[0].filename}`;
-      const newName = `${storagePath}/${req.params.userId}/${req.body.filename}`;
-      fs.rename(oldName, newName, ((err) => {
-        console.log(err);
-      }));
-    }
-    // update all metadata
-    const fileData = {
-      filename: req.body.filename,
-      bucket: req.body.bucket,
-    };
-    const record = await model.patch(id, fileData);
+    updateFilename(metadata, req);
 
     res.json({ record });
   }));
-  // this endpoint overwrites file
-  // errors: 
+  // overwrites file
   router.put(`${storageRoute}/:userId/:filename`, upload.single('file'), errorHandlers.catchErrors(async (req, res) => {
     const { file } = req;
-    console.log(req.body);
+
     if (!file) {
-      res.json({ error: 'no file' });
+      res.json({ message: 'no file' });
       return;
     }
-    res.json({ message: 'saved' });
+
+    res.json({ message: 'file overwritten' });
   }));
 
 };
