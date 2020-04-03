@@ -16,8 +16,8 @@ const getCollections = async () => {
     .listCollections()
     .toArray();
 
-  return collections
-}
+  return collections;
+};
 
 export const getCollectionNames = async () => {
   const collections = await getCollections();
