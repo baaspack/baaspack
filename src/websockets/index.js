@@ -1,4 +1,5 @@
 import WebSocket from 'ws';
+// import sessionParser from '../app';
 import createWebsocketRouteHandlers from './routeHandlers';
 import onConnection from './onConnection';
 import onMessage from './onMessage';
@@ -6,6 +7,7 @@ import onClose from './onClose';
 
 const startWebsocketServer = (server, models) => {
   const wss = new WebSocket.Server({ server });
+  // const wss = new WebSocket.Server({ clientTracking: false, noServer: true });
   wss.router = createWebsocketRouteHandlers(wss);
 
   // function noop() { }
@@ -13,6 +15,24 @@ const startWebsocketServer = (server, models) => {
   // function heartbeat() {
   //   this.isAlive = true;
   // }
+
+  // server.on('upgrade', function (request, socket, head) {
+  //   console.log('Parsing session from request...');
+
+  //   sessionParser(request, {}, () => {
+  //     if (!request.session.userId) {
+  //       console.log('Destroying websocket connection!')
+  //       socket.destroy();
+  //       return;
+  //     }
+
+  //     console.log('Session is parsed!');
+
+  //     wss.handleUpgrade(request, socket, head, function (ws) {
+  //       wss.emit('connection', ws, request);
+  //     });
+  //   });
+  // });
 
   wss.on('connection', (client) => {
     // client.isAlive = true;

@@ -18,6 +18,17 @@ redisClient.on('error', (err) => {
   console.error('Redis Connection Error:', err);
 });
 
+// export const sessionParser = session({
+//   store: new RedisStore({ client: redisClient }),
+//   name: '_redis',
+//   secret: process.env.SESSION_SECRET,
+//   resave: false,
+//   saveUninitialized: true,
+//   cookie: {
+//     sameSite: true,
+//   },
+// });
+
 const setupMiddleware = (app, routes, authRoutes, passport) => {
   // Enable CORS from all origins
   app.use(cors({ origin: true, credentials: true }));
@@ -29,6 +40,8 @@ const setupMiddleware = (app, routes, authRoutes, passport) => {
   app.use(express.urlencoded({ extended: true }));
 
   // Configure sessions
+  // app.use(sessionParser);
+
   app.use(session({
     store: new RedisStore({ client: redisClient }),
     name: '_redis',
@@ -41,7 +54,7 @@ const setupMiddleware = (app, routes, authRoutes, passport) => {
   }));
 
   // Early exit if a request doesn't include an auth header
-  // app.use(hasApiKey);
+  app.use(hasApiKey);
 
   app.use(passport.initialize());
   app.use(passport.session());

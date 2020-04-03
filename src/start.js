@@ -18,7 +18,6 @@ import createAuthRoutes from './routes/authentication';
 import addRoutesFromModel from './routes';
 import createCollectionEndpoints from './routes/collectionManager';
 import createUploadsEndpoints from './routes/uploads';
-// import createExpressApp from './app';
 
 // Import variables from .env to make them available on `process.env`
 dotenv.config();
@@ -71,18 +70,10 @@ const start = async () => {
   createCollectionEndpoints(router, getCollectionNames, generateModel, addRoutesFromModel);
 
   // Generate endpoints for storage
-  models.uploads = generateUploadsModel();
+  models.push(generateUploadsModel());
   createUploadsEndpoints(router, models.uploads);
 
   setupMiddleware(app, router, authRoutes, passport);
-
-  // // Start the web server
-  // const webServerPort = process.env.PORT || 3000;
-
-  // const server = app.listen(webServerPort, () => {
-  //   console.log(`App is listening for connections on port ${server.address().port}.`);
-  //   console.log(`Looking out for API keys of: ${process.env.API_KEY}`);
-  // });
 };
 
 start();

@@ -71,7 +71,7 @@ export const generateUploadsModel = () => {
 };
 
 export const seedDatabase = async () => {
-  const collectionNames = ['Message'];
+  const collectionNames = ['messages'];
 
   const appModels = await generateModels(collectionNames);
 

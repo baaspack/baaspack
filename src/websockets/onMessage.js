@@ -1,7 +1,7 @@
 const onMessage = (wss, client, message, models) => {
   const find = async () => {
     const { action, collection, query } = message;
-    const model = models[collection];
+    const model = getModel(collection);
     const response = await model.find(query);
 
     wss.router.sendMessage(client, {
@@ -12,7 +12,7 @@ const onMessage = (wss, client, message, models) => {
 
   const getOne = async () => {
     const { action, collection, id } = message;
-    const model = models[collection];
+    const model = getModel(collection);
     const response = await model.get(id);
 
     wss.router.sendMessage(client, {
@@ -22,10 +22,9 @@ const onMessage = (wss, client, message, models) => {
     });
   }
 
-  // works with sdk
   const getAll = async () => {
     const { action, collection } = message;
-    const model = models[collection];
+    const model = getModel(collection);
     const response = await model.find();
 
     wss.router.sendMessage(client, {
@@ -35,10 +34,9 @@ const onMessage = (wss, client, message, models) => {
     });
   }
 
-  // works with sdk
   const create = async () => {
     const { action, collection, data } = message;
-    const model = models[collection];
+    const model = getModel(collection);
     const response = await model.create(data);
 
     wss.router.broadcast({
@@ -48,10 +46,9 @@ const onMessage = (wss, client, message, models) => {
     });
   }
 
-  // works with sdk
   const update = async () => {
     const { action, collection, id, data } = message;
-    const model = models[collection];
+    const model = getModel(collection);
     const response = await model.update(id, data)
 
     wss.router.broadcast({
@@ -63,7 +60,7 @@ const onMessage = (wss, client, message, models) => {
 
   const patch = async () => {
     const { action, collection, id, data } = message;
-    const model = models[collection];
+    const model = getModel(collection);
     const response = await model.patch(id, data)
 
     wss.router.broadcast({
@@ -73,10 +70,9 @@ const onMessage = (wss, client, message, models) => {
     });
   }
 
-  // works with sdk
   const deleted = async () => {
     const { collection, id } = message;
-    const model = models[collection];
+    const model = getModel(collection);
     const response = await model.delete(id);
 
     wss.router.broadcast({
@@ -103,6 +99,10 @@ const onMessage = (wss, client, message, models) => {
       action,
       userId: client.userId,
     });
+  }
+
+  const getModel = (collection) => {
+    return models.find((model) => model.name === collection);
   }
 
   const setUserId = () => {
