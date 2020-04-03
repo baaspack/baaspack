@@ -56,6 +56,8 @@ const createAuthRoutes = (User, passport) => {
         return res.status(401).json({ message: info.message });
       }
 
+      // console.log('REQ.SESSION FROM LOGIN', req.session); // holden added this
+
       req.logIn(user, (err) => {
         if (err) { return next(err); }
         return res.send({ id: user.id });

@@ -18,7 +18,7 @@ redisClient.on('error', (err) => {
   console.error('Redis Connection Error:', err);
 });
 
-// export const sessionParser = session({
+// let sessionParser = session({
 //   store: new RedisStore({ client: redisClient }),
 //   name: '_redis',
 //   secret: process.env.SESSION_SECRET,
@@ -40,9 +40,9 @@ const setupMiddleware = (app, routes, authRoutes, passport) => {
   app.use(express.urlencoded({ extended: true }));
 
   // Configure sessions
-  // app.use(sessionParser);
+  app.use(sessionParser);
 
-  app.use(session({
+  const sessionParser = app.use(session({
     store: new RedisStore({ client: redisClient }),
     name: '_redis',
     secret: process.env.SESSION_SECRET,
@@ -85,4 +85,8 @@ const setupMiddleware = (app, routes, authRoutes, passport) => {
   app.use(errorHandlers.productionErrors);
 };
 
+// console.log('sessionParser from end of app.js', sessionParser);
+
 export default setupMiddleware;
+
+// export { sessionParser, setupMiddleware };
