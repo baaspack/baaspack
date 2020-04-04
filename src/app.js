@@ -7,29 +7,33 @@ import connectRedis from 'connect-redis';
 import errorHandlers from './handlers/errorHandlers';
 import { hasApiKey } from './handlers/authorization';
 
-const RedisStore = connectRedis(session);
-const redisClient = redis.createClient({ host: process.env.REDIS_HOSTNAME });
+export const createSessionParser = () => {
+  const RedisStore = connectRedis(session);
+  const redisClient = redis.createClient({ host: process.env.REDIS_HOSTNAME });
 
-redisClient.on('connect', () => {
-  console.log('Redis:', 'connected!');
-});
+  redisClient.on('connect', () => {
+    console.log('Redis:', 'connected!');
+  });
 
-redisClient.on('error', (err) => {
-  console.error('Redis Connection Error:', err);
-});
+  redisClient.on('error', (err) => {
+    console.error('Redis Connection Error:', err);
+  });
 
-// let sessionParser = session({
-//   store: new RedisStore({ client: redisClient }),
-//   name: '_redis',
-//   secret: process.env.SESSION_SECRET,
-//   resave: false,
-//   saveUninitialized: true,
-//   cookie: {
-//     sameSite: true,
-//   },
-// });
+  const sessionParser = session({
+    store: new RedisStore({ client: redisClient }),
+    name: '_redis',
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+      sameSite: true,
+    },
+  });
 
-const setupMiddleware = (app, routes, authRoutes, passport) => {
+  return sessionParser;
+}
+
+export const setupMiddleware = (app, sessionParser, routes, authRoutes, passport) => {
   // Enable CORS from all origins
   app.use(cors({ origin: true, credentials: true }));
 
@@ -41,17 +45,6 @@ const setupMiddleware = (app, routes, authRoutes, passport) => {
 
   // Configure sessions
   app.use(sessionParser);
-
-  const sessionParser = app.use(session({
-    store: new RedisStore({ client: redisClient }),
-    name: '_redis',
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: true,
-    cookie: {
-      sameSite: true,
-    },
-  }));
 
   // Early exit if a request doesn't include an auth header
   app.use(hasApiKey);
@@ -66,8 +59,6 @@ const setupMiddleware = (app, routes, authRoutes, passport) => {
   // serve static files from public directory
   app.use(express.static('public/uploads'));
   app.use(express.static('public'));
-  // app.use('/static', express.static(path.join(__dirname, 'public')));
-  // app.use('/static', express.static(__dirname + '/public'));
 
   // 404 response for requests that didn't hit a route
   app.use(errorHandlers.notFound);
@@ -84,9 +75,3 @@ const setupMiddleware = (app, routes, authRoutes, passport) => {
   // production error handler -- does not print stack trace
   app.use(errorHandlers.productionErrors);
 };
-
-// console.log('sessionParser from end of app.js', sessionParser);
-
-export default setupMiddleware;
-
-// export { sessionParser, setupMiddleware };
