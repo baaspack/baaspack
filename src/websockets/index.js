@@ -47,7 +47,7 @@ const startWebsocketServer = (server, sessionParser, models) => {
   });
 
   const interval = setInterval(function ping() {
-    wss.clients.forEach(function each(ws) {
+    wss.connections.forEach(function each(ws) {
       if (ws.isAlive === false) return ws.terminate();
 
       ws.isAlive = false;

@@ -39,11 +39,17 @@ const onMessage = (wss, ws, userId, message, models) => {
     const model = getModel(collection);
     const response = await model.create(data);
 
-    wss.router.broadcast({
+    let message = {
       action,
       collection,
       response: response,
-    });
+    };
+
+    if (data.channel) {
+      message.channelId = data.channelId;
+    }
+
+    wss.router.broadcast(message);
   }
 
   const update = async () => {
@@ -51,11 +57,17 @@ const onMessage = (wss, ws, userId, message, models) => {
     const model = getModel(collection);
     const response = await model.update(id, data)
 
-    wss.router.broadcast({
+    let message = {
       action,
       collection,
       response: response,
-    });
+    };
+
+    if (data.channel) {
+      message.channelId = data.channelId;
+    }
+
+    wss.router.broadcast(message);
   }
 
   const patch = async () => {
@@ -63,11 +75,17 @@ const onMessage = (wss, ws, userId, message, models) => {
     const model = getModel(collection);
     const response = await model.patch(id, data)
 
-    wss.router.broadcast({
+    let message = {
       action,
       collection,
       response: response,
-    });
+    };
+
+    if (data.channel) {
+      message.channelId = data.channelId;
+    }
+
+    wss.router.broadcast(message);
   }
 
   const deleted = async () => {
@@ -75,11 +93,17 @@ const onMessage = (wss, ws, userId, message, models) => {
     const model = getModel(collection);
     const response = await model.delete(id);
 
-    wss.router.broadcast({
+    let message = {
       action,
       collection,
       response: response,
-    });
+    };
+
+    if (data.channel) {
+      message.channelId = data.channelId;
+    }
+
+    wss.router.broadcast(message);
   }
 
   const open = () => { // redo this
