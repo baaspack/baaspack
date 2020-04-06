@@ -6,7 +6,7 @@ const onMessage = (wss, ws, userId, message, models) => {
 
     wss.router.sendMessage(ws, {
       action,
-      response: response,
+      response,
     });
   }
 
@@ -18,7 +18,7 @@ const onMessage = (wss, ws, userId, message, models) => {
     wss.router.sendMessage(ws, {
       action,
       collection: collection,
-      response: response,
+      response,
     });
   }
 
@@ -30,7 +30,7 @@ const onMessage = (wss, ws, userId, message, models) => {
     wss.router.sendMessage(ws, {
       action,
       collection,
-      response: response,
+      response,
     });
   }
 
@@ -42,7 +42,7 @@ const onMessage = (wss, ws, userId, message, models) => {
     let message = {
       action,
       collection,
-      response: response,
+      response,
     };
 
     if (data.channel) {
@@ -60,7 +60,7 @@ const onMessage = (wss, ws, userId, message, models) => {
     let message = {
       action,
       collection,
-      response: response,
+      response,
     };
 
     if (data.channel) {
@@ -78,7 +78,7 @@ const onMessage = (wss, ws, userId, message, models) => {
     let message = {
       action,
       collection,
-      response: response,
+      response,
     };
 
     if (data.channel) {
@@ -96,7 +96,7 @@ const onMessage = (wss, ws, userId, message, models) => {
     let message = {
       action,
       collection,
-      response: response,
+      response,
     };
 
     if (data.channel) {
@@ -181,6 +181,7 @@ const onMessage = (wss, ws, userId, message, models) => {
     const message = {
       action,
       channelId,
+      response,
     }
 
     wss.router.sendMessage(ws, message);
@@ -208,6 +209,29 @@ const onMessage = (wss, ws, userId, message, models) => {
     const message = {
       action,
       channelId,
+      response,
+    }
+
+    wss.router.sendMessage(ws, message);
+  }
+
+  const changeChannel = () => {
+    // message props needed:
+    // action
+    // usersId(given in function params)
+    // usersInformationCollection
+    // channelType of channel to change to
+    // channelId of channel to change to
+
+    const { action, usersInformationCollection, channelType, channelId } = message;
+    const model = getModel(usersInformationCollection);
+    const response = await model.patch(id, { currentChannel: { name: channelType, id: channelId } });
+
+    const message = {
+      action,
+      channelType,
+      channelId,
+      response
     }
 
     wss.router.sendMessage(ws, message);
@@ -263,6 +287,9 @@ const onMessage = (wss, ws, userId, message, models) => {
       break;
     case 'leaveChannel':
       leaveChannel();
+      break;
+    case 'changeChannel':
+      changeChannel();
       break;
     default:
       wss.router.sendMessage(client, {
