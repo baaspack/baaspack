@@ -10,9 +10,13 @@ const createWebsocketRouteHandlers = (wss) => {
       client.send(JSON.stringify(message));
     },
     broadcast(message) {
-      wss.clients.forEach(client => {
-        this.sendMessage(client, message);
-      });
+      for (let client in wss.connections) {
+        this.sendMessage(client.connection, message)
+      }
+
+      // wss.connections.forEach(client => {
+      //   this.sendMessage(client, message);
+      // });
     },
   };
 

@@ -7,6 +7,8 @@ import onClose from './onClose';
 const startWebsocketServer = (server, sessionParser, models) => {
   const wss = new WebSocket.Server({ noServer: true });
   wss.router = createWebsocketRouteHandlers(wss);
+  wss.connections = {};
+  wss.channels = {};
 
   function noop() { }
 
@@ -29,16 +31,18 @@ const startWebsocketServer = (server, sessionParser, models) => {
   });
 
   wss.on('connection', (ws, req) => {
+    const userId = req.session.passport.user;
+
     ws.isAlive = true;
     ws.on('pong', heartbeat);
-    onConnection(wss, ws);
+    onConnection(wss, ws, userId);
 
     ws.on('message', (data) => {
-      onMessage(wss, ws, JSON.parse(data), models);
+      onMessage(wss, ws, userId, JSON.parse(data), models);
     });
 
     ws.on('close', (data) => {
-      onClose(wss, ws, JSON.parse(data));
+      onClose(wss, ws, userId, JSON.parse(data));
     });
   });
 

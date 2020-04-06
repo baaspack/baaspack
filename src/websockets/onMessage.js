@@ -1,10 +1,10 @@
-const onMessage = (wss, client, message, models) => {
+const onMessage = (wss, ws, userId, message, models) => {
   const find = async () => {
     const { action, collection, query } = message;
     const model = getModel(collection);
     const response = await model.find(query);
 
-    wss.router.sendMessage(client, {
+    wss.router.sendMessage(ws, {
       action,
       response: response,
     });
@@ -15,7 +15,7 @@ const onMessage = (wss, client, message, models) => {
     const model = getModel(collection);
     const response = await model.get(id);
 
-    wss.router.sendMessage(client, {
+    wss.router.sendMessage(ws, {
       action,
       collection: collection,
       response: response,
@@ -27,7 +27,7 @@ const onMessage = (wss, client, message, models) => {
     const model = getModel(collection);
     const response = await model.find();
 
-    wss.router.sendMessage(client, {
+    wss.router.sendMessage(ws, {
       action,
       collection,
       response: response,
@@ -82,33 +82,115 @@ const onMessage = (wss, client, message, models) => {
     });
   }
 
-  const open = () => {
+  const open = () => { // redo this
     const { action } = message;
-    setUserId();
 
-    wss.router.sendMessage(client, {
+    wss.router.sendMessage(ws, {
       action,
       response: "User's id has been associated with this connection."
     })
   }
 
-  const close = () => {
+  const close = () => { // redo this
     const { action } = message;
 
     wss.router.broadcast({
       action,
-      userId: client.userId,
+      userId,
     });
+
+    delete wss.connections[userId];
+  }
+
+  const joinUsersChannels = async () => {
+    // message props needed:
+    // action
+    // usersId(given in function params)
+    // usersInformationCollection
+
+    // Get user’s channels from usersInformationCollection
+    const { action, usersInformationCollection } = message;
+    const model = getModel(usersInformationCollection);
+    const usersChannels = await model.find({ userId: userId }).channels;
+
+    // Add user to connections array in channels array
+    usersChannels.forEach(channelId => {
+      if (!wss.channels[channelId]) {
+        wss.channels[channelId] = { connections: {} };
+      }
+
+      wss.channels[channelId].connections[userId] = { connection: ws };
+    });
+
+    // Send message back to client with array of channels user belongs to
+    const message = {
+      action,
+      usersChannels,
+    }
+
+    wss.router.sendMessage(ws, message);
+  }
+
+  const joinChannel = async () => {
+    // message props needed:
+    // action
+    // usersId(given in function params)
+    // usersInformationCollection
+    // channelId of channel to join
+
+    // Get user’s channels from usersInformationCollection
+    const { action, usersInformationCollection, channelId } = message;
+    const model = getModel(usersInformationCollection);
+    let usersChannels = await model.find({ userId: userId }).channels;
+    userChannels = [...usersChannels, channelId];
+
+    // Update channels array field on UsersMeta - add channel to array
+    const response = await model.patch(id, { channels: userChannels });
+
+    // Add user to connections array in channels array
+    if (!wss.channels[channelId]) {
+      wss.channels[channelId] = { connections: {} };
+    }
+
+    wss.channels[channelId].connections[userId] = { connection: ws };
+
+    const message = {
+      action,
+      channelId,
+    }
+
+    wss.router.sendMessage(ws, message);
+  }
+
+  const leaveChannel = async () => {
+    // message props needed:
+    // action
+    // usersId(given in function params)
+    // usersInformationCollection
+    // channelId of channel to leave
+
+    // Get user’s channels from usersInformationCollection
+    const { action, usersInformationCollection, channelId } = message;
+    const model = getModel(usersInformationCollection);
+    let usersChannels = await model.find({ userId: userId }).channels;
+    usersChannels = usersChannels.filter(channel => channel.id !== channelId);
+
+    // Update channels array field on UsersMeta - delete channel from array
+    const response = await model.patch(id, { channels: userChannels });
+
+    // delete user from connections array in channels array
+    delete wss.channels[channelId].connections[userId];
+
+    const message = {
+      action,
+      channelId,
+    }
+
+    wss.router.sendMessage(ws, message);
   }
 
   const getModel = (collection) => {
     return models.find((model) => model.name === collection);
-  }
-
-  const setUserId = () => {
-    if (message.userId) {
-      client.userId = message.userId;
-    }
   }
 
   const { action } = message;
@@ -148,6 +230,15 @@ const onMessage = (wss, client, message, models) => {
       break;
     case 'close':
       close();
+      break;
+    case 'joinUsersChannels':
+      joinUsersChannels();
+      break;
+    case 'joinChannel':
+      joinChannel();
+      break;
+    case 'leaveChannel':
+      leaveChannel();
       break;
     default:
       wss.router.sendMessage(client, {
