@@ -12,6 +12,7 @@ import {
 } from './db/mongoose';
 
 import startWebsocketServer from './websockets';
+import createAdminWsServer from './servers/admin';
 import { createSessionParser, setupMiddleware, } from './app';
 import initializePassport from './handlers/authorization';
 import createAuthRoutes from './routes/authentication';
@@ -77,6 +78,8 @@ const start = async () => {
 
   // setupMiddleware(app, router, authRoutes, passport);
   setupMiddleware(app, sessionParser, router, authRoutes, passport);
+
+  createAdminWsServer();
 };
 
 start();
