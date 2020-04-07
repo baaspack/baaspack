@@ -22,7 +22,9 @@ const createAction = (type, { model, data }) => (
 
 const configureWs = (socket, models, UserModel) => {
   socket.on('message', async (msg) => {
-    const { action, model, id, body } = JSON.parse(msg);
+    const { action, model, data } = JSON.parse(msg);
+    // eslint-disable-next-line no-underscore-dangle
+    const id = data && data._id;
 
     const modelToUse = models.find(({ name }) => name === model);
     const actionToTake = methodMap[action];
@@ -30,9 +32,9 @@ const configureWs = (socket, models, UserModel) => {
     let res = null;
 
     if (actionToTake === 'create' || actionToTake === 'find') {
-      res = await modelToUse[actionToTake](body);
+      res = await modelToUse[actionToTake](data);
     } else {
-      res = await modelToUse[actionToTake](id, body);
+      res = await modelToUse[actionToTake](id, data);
     }
 
     const socketResponse = createAction(
