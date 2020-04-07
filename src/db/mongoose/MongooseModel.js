@@ -32,9 +32,23 @@ const createAppModel = (name, mongooseModel) => {
       return this.get(id);
     },
     async patch(id, data) {
+      const objToUpdate = {};
+      const fieldsToRemove = {};
+
+      Object.keys(data).forEach((key) => {
+        if (data[key] === null) {
+          fieldsToRemove[key] = 1;
+        } else {
+          objToUpdate[key] = data[key];
+        }
+      });
+
       const updatedDoc = await mongooseModel.findOneAndUpdate(
         { _id: id },
-        { $set: data },
+        {
+          $set: objToUpdate,
+          $unset: fieldsToRemove,
+        },
         { returnOriginal: false },
       );
 
