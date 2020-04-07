@@ -23,8 +23,8 @@ export const getCollectionNames = async () => {
   const collections = await getCollections();
 
   const collectionNames = collections
-    .filter(({ name }) => !/user(s)?/i.test(name))
-    .filter(({ name }) => !/uploads/i.test(name))
+    .filter(({ name }) => name !== 'users')
+    .filter(({ name }) => name !== 'uploads')
     .map(({ name }) => name);
 
   return collectionNames;
