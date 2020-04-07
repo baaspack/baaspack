@@ -4,10 +4,7 @@ const onMessage = (wss, ws, userId, message, models) => {
     const model = getModel(collection);
     const response = await model.find(query);
 
-    wss.router.sendMessage(ws, {
-      action,
-      response,
-    });
+    wss.router.sendMessage(ws, { action, response });
   }
 
   const getOne = async () => {
@@ -15,11 +12,7 @@ const onMessage = (wss, ws, userId, message, models) => {
     const model = getModel(collection);
     const response = await model.get(id);
 
-    wss.router.sendMessage(ws, {
-      action,
-      collection: collection,
-      response,
-    });
+    wss.router.sendMessage(ws, { action, collection, response });
   }
 
   const getAll = async () => {
@@ -27,11 +20,7 @@ const onMessage = (wss, ws, userId, message, models) => {
     const model = getModel(collection);
     const response = await model.find();
 
-    wss.router.sendMessage(ws, {
-      action,
-      collection,
-      response,
-    });
+    wss.router.sendMessage(ws, { action, collection, response });
   }
 
   const create = async () => {
@@ -39,53 +28,23 @@ const onMessage = (wss, ws, userId, message, models) => {
     const model = getModel(collection);
     const response = await model.create(data);
 
-    let message = {
-      action,
-      collection,
-      response,
-    };
-
-    if (data.channel) {
-      message.channelId = data.channelId;
-    }
-
-    wss.router.broadcast(message);
+    wss.router.broadcast({ action, collection, response });
   }
 
   const update = async () => {
     const { action, collection, id, data } = message;
     const model = getModel(collection);
-    const response = await model.update(id, data)
+    const response = await model.update(id, data);
 
-    let message = {
-      action,
-      collection,
-      response,
-    };
-
-    if (data.channel) {
-      message.channelId = data.channelId;
-    }
-
-    wss.router.broadcast(message);
+    wss.router.broadcast({ action, collection, response });
   }
 
   const patch = async () => {
     const { action, collection, id, data } = message;
     const model = getModel(collection);
-    const response = await model.patch(id, data)
+    const response = await model.patch(id, data);
 
-    let message = {
-      action,
-      collection,
-      response,
-    };
-
-    if (data.channel) {
-      message.channelId = data.channelId;
-    }
-
-    wss.router.broadcast(message);
+    wss.router.broadcast({ action, collection, response });
   }
 
   const deleted = async () => {
@@ -93,37 +52,27 @@ const onMessage = (wss, ws, userId, message, models) => {
     const model = getModel(collection);
     const response = await model.delete(id);
 
-    let message = {
-      action,
-      collection,
-      response,
-    };
-
-    if (data.channel) {
-      message.channelId = data.channelId;
-    }
-
-    wss.router.broadcast(message);
+    wss.router.broadcast({ action, collection, response });
   }
 
-  const open = () => { // redo this
-    const { action } = message;
-
-    wss.router.sendMessage(ws, {
-      action,
-      response: "User's id has been associated with this connection."
-    })
-  }
-
-  const close = () => { // redo this
+  // implement open properly
+  const open = () => {
     const { action } = message;
 
     wss.router.broadcast({
       action,
       userId,
     });
+  }
 
-    delete wss.connections[userId];
+  // implement close properly
+  const close = () => {
+    const { action } = message;
+
+    wss.router.broadcast({
+      action,
+      userId,
+    });
   }
 
   const joinUsersChannels = async () => {
@@ -215,7 +164,7 @@ const onMessage = (wss, ws, userId, message, models) => {
     wss.router.sendMessage(ws, message);
   }
 
-  const changeChannel = () => {
+  const changeChannel = async () => {
     // message props needed:
     // action
     // usersId(given in function params)
