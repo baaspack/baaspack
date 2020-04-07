@@ -10,19 +10,15 @@ const createWebsocketRouteHandlers = (wss) => {
       client.send(JSON.stringify(message));
     },
     broadcast(message) {
-      if (message.channelId) {
-        wss.channels[channelId].connections.forEach(connection => {
+      console.log('WSS CHANNELS -wss.channels[message.channelId]:', wss.channels);
+
+      if (message.channelId && wss.channels[message.channelId]) { // WSS.CHANNELS NOT WORKING
+        wss.channels[message.channelId].connections.forEach(connection => {
           this.sendMessage(connection, message);
         });
       } else {
-        Object.keys(wss.connections).forEach(client => {
-          this.sendMessage(client.connection, message)
-        });
+        wss.clients.forEach((client) => this.sendMessage(client, message));
       }
-
-      // wss.connections.forEach(client => {
-      //   this.sendMessage(client, message);
-      // });
     },
   };
 
