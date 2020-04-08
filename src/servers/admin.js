@@ -36,7 +36,6 @@ const configureWs = (socket, models, UserModel) => {
       if (actionToTake === 'create' || actionToTake === 'find') {
         res = await modelToUse[actionToTake](data);
       } else {
-        console.log(actionToTake, id, data);
         res = await modelToUse[actionToTake](id, data);
       }
 
