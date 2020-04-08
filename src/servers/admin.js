@@ -20,75 +20,96 @@ const createAction = (type, { model, data }) => (
   })
 );
 
+const createCollectionManagerRoutes = (models, router, generateModel, addRoutesFromModel) => async ({ action, model, data }) => {
+  const actionToTake = methodMap[action];
 
-// TODO: refactor this function, it's gnarly
-const configureWs = (socket, models, UserModel, router, generateModel, addRoutesFromModel) => {
+  if (actionToTake === 'create') {
+    const modelToMake = data.model;
+
+    if (modelToMake === 'users' || models.find(({ name }) => name === modelToMake)) {
+      const res = { action, message: 'This collection already exists' };
+      return createAction('WS_FAILURE', { model, data: res });
+    }
+
+    const newModel = await generateModel(modelToMake);
+    models.push(newModel);
+    addRoutesFromModel(router, newModel);
+
+    return createAction('COLLECTION_ADD_COLLECTION_SUCCESS', { model, data: { name: modelToMake } });
+  }
+};
+
+const createCollectionRoutes = (models) => async ({ action, model, data }) => {
+  const actionToTake = methodMap[action];
+
+  // eslint-disable-next-line no-underscore-dangle
+  const id = data && (data._id || data.id);
+  const modelToUse = models.find(({ name }) => name === model);
+
+  let res = null;
+  let socketMsgType = 'WS_FAILURE'; // default to failure message
+
+  try {
+    if (actionToTake === 'create' || actionToTake === 'find') {
+      res = await modelToUse[actionToTake](data);
+    } else {
+      res = await modelToUse[actionToTake](id, data);
+    }
+
+    socketMsgType = `COLLECTION_${action.toUpperCase()}_SUCCESS`;
+  } catch (e) {
+    console.error(e);
+    res = { action, message: e.message };
+  }
+
+  return createAction(socketMsgType, { model, data: res });
+};
+
+const createUserRoutes = (UserModel) => async ({ action, model, data }) => {
+
+};
+
+const getCollectionNames = (models) => {
+  const modelNames = models.map(({ name }) => name);
+
+  return createAction('COLLECTION_GET_ALL', { data: modelNames });
+};
+
+const configureWs = (socket, collectionManagerRoutes, userRoutes, collectionRoutes) => {
   socket.on('message', async (msg) => {
-    const { action, model, data } = JSON.parse(msg);
-    const actionToTake = methodMap[action];
+    const requestMessage = JSON.parse(msg);
 
-    if (actionToTake === 'create' && model === 'collection') {
-      const modelToMake = data.model;
+    let res;
 
-      if (modelToMake === 'users' || models.find(({ name }) => name === modelToMake)) {
-        const res = { action, message: 'This collection already exists' };
-        const socketEarlyResponse = createAction('WS_FAILURE', { model, data: res });
-        socket.send(socketEarlyResponse);
-        return;
-      }
-
-      const newModel = await generateModel(modelToMake);
-      models.push(newModel);
-      addRoutesFromModel(router, newModel);
-
-      const socketEarlyResponse = createAction('COLLECTION_ADD_COLLECTION_SUCCESS', { model, data: { name: modelToMake } });
-      socket.send(socketEarlyResponse);
-      return;
+    switch (requestMessage.model) {
+      case 'collections':
+        res = await collectionManagerRoutes(requestMessage);
+        break;
+      case 'users':
+        res = await userRoutes(requestMessage);
+        break;
+      default:
+        console.log('collections route');
+        res = await collectionRoutes(requestMessage);
+        break;
     }
 
-    // eslint-disable-next-line no-underscore-dangle
-    const id = data && (data._id || data.id);
-    const modelToUse = models.find(({ name }) => name === model);
-
-    let res = null;
-    let socketMsgType = 'WS_FAILURE'; // default to failure message
-
-    try {
-      if (actionToTake === 'create' || actionToTake === 'find') {
-        res = await modelToUse[actionToTake](data);
-      } else {
-        res = await modelToUse[actionToTake](id, data);
-      }
-
-      socketMsgType = `COLLECTION_${action.toUpperCase()}_SUCCESS`;
-    } catch (e) {
-      res = { action, message: e.message };
-    }
-
-    const socketResponse = createAction(socketMsgType, { model, data: res });
-
-    socket.send(socketResponse);
+    socket.send(res);
   });
-
-  const getCollectionNames = () => {
-    const modelNames = models.map(({ name }) => name);
-
-    const socketResponse = createAction(
-      'COLLECTION_GET_ALL',
-      {
-        data: modelNames,
-      },
-    );
-
-    socket.send(socketResponse);
-  };
-
-  getCollectionNames();
 };
 
 export const createWsServer = (models, UserModel, router, generateModel, addRoutesFromModel) => {
   const httpServer = http.createServer();
   const wss = new WebSocket.Server({ clientTracking: false, noServer: true });
+
+  const collectionManagerRoutes = createCollectionManagerRoutes(
+    models,
+    router,
+    generateModel,
+    addRoutesFromModel,
+  );
+  const userRoutes = createUserRoutes(UserModel);
+  const collectionRoutes = createCollectionRoutes(models);
 
   httpServer.on('upgrade', (req, socket, head) => {
     // authenticate the request somehow?
@@ -105,7 +126,8 @@ export const createWsServer = (models, UserModel, router, generateModel, addRout
       console.log(`see ya from baas`);
     });
 
-    configureWs(ws, models, UserModel, router, generateModel, addRoutesFromModel);
+    configureWs(ws, collectionManagerRoutes, userRoutes, collectionRoutes);
+    ws.send(getCollectionNames(models));
   });
 
   httpServer.listen(4000);
