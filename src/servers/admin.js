@@ -20,17 +20,38 @@ const createAction = (type, { model, data }) => (
   })
 );
 
-const configureWs = (socket, models, UserModel) => {
+
+// TODO: refactor this function, it's gnarly
+const configureWs = (socket, models, UserModel, router, generateModel, addRoutesFromModel) => {
   socket.on('message', async (msg) => {
     const { action, model, data } = JSON.parse(msg);
-    // eslint-disable-next-line no-underscore-dangle
-    const id = data && (data._id || data.id);
-
-    const modelToUse = models.find(({ name }) => name === model);
     const actionToTake = methodMap[action];
 
+    if (actionToTake === 'create' && model === 'collection') {
+      const modelToMake = data.model;
+
+      if (modelToMake === 'users' || models.find(({ name }) => name === modelToMake)) {
+        const res = { action, message: 'This collection already exists' };
+        const socketEarlyResponse = createAction('WS_FAILURE', { model, data: res });
+        socket.send(socketEarlyResponse);
+        return;
+      }
+
+      const newModel = await generateModel(modelToMake);
+      models.push(newModel);
+      addRoutesFromModel(router, newModel);
+
+      const socketEarlyResponse = createAction('COLLECTION_ADD_COLLECTION_SUCCESS', { model, data: { name: modelToMake } });
+      socket.send(socketEarlyResponse);
+      return;
+    }
+
+    // eslint-disable-next-line no-underscore-dangle
+    const id = data && (data._id || data.id);
+    const modelToUse = models.find(({ name }) => name === model);
+
     let res = null;
-    let socketMsgType = null;
+    let socketMsgType = 'WS_FAILURE'; // default to failure message
 
     try {
       if (actionToTake === 'create' || actionToTake === 'find') {
@@ -42,16 +63,9 @@ const configureWs = (socket, models, UserModel) => {
       socketMsgType = `COLLECTION_${action.toUpperCase()}_SUCCESS`;
     } catch (e) {
       res = { action, message: e.message };
-      socketMsgType = 'WS_FAILURE';
     }
 
-    const socketResponse = createAction(
-      socketMsgType,
-      {
-        model,
-        data: res,
-      },
-    );
+    const socketResponse = createAction(socketMsgType, { model, data: res });
 
     socket.send(socketResponse);
   });
@@ -72,7 +86,7 @@ const configureWs = (socket, models, UserModel) => {
   getCollectionNames();
 };
 
-export const createWsServer = (models, UserModel) => {
+export const createWsServer = (models, UserModel, router, generateModel, addRoutesFromModel) => {
   const httpServer = http.createServer();
   const wss = new WebSocket.Server({ clientTracking: false, noServer: true });
 
@@ -91,7 +105,7 @@ export const createWsServer = (models, UserModel) => {
       console.log(`see ya from baas`);
     });
 
-    configureWs(ws, models, UserModel);
+    configureWs(ws, models, UserModel, router, generateModel, addRoutesFromModel);
   });
 
   httpServer.listen(4000);

@@ -4,7 +4,13 @@ const seedData = async (models) => {
   await MessageModel.deleteAll();
 
   await MessageModel.create({
-    text: 'The first message is the hardest',
+    text: {
+      nested: 'The first message is the hardest',
+      gross: {
+        this: 'looks pretty bad',
+      },
+    },
+    msgs: ['haha', 'yup', 'arrays too'],
   });
 
   await MessageModel.create({

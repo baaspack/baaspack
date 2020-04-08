@@ -79,7 +79,7 @@ const start = async () => {
   // setupMiddleware(app, router, authRoutes, passport);
   setupMiddleware(app, sessionParser, router, authRoutes, passport);
 
-  createAdminWsServer(models, User);
+  createAdminWsServer(models, User, router, generateModel, addRoutesFromModel);
 };
 
 start();
