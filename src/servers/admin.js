@@ -30,15 +30,23 @@ const configureWs = (socket, models, UserModel) => {
     const actionToTake = methodMap[action];
 
     let res = null;
+    let socketMsgType = null;
 
-    if (actionToTake === 'create' || actionToTake === 'find') {
-      res = await modelToUse[actionToTake](data);
-    } else {
-      res = await modelToUse[actionToTake](id, data);
+    try {
+      if (actionToTake === 'create' || actionToTake === 'find') {
+        res = await modelToUse[actionToTake](data);
+      } else {
+        res = await modelToUse[actionToTake](id, data);
+      }
+
+      socketMsgType = `COLLECTION_${action.toUpperCase()}_SUCCESS`;
+    } catch (e) {
+      res = { action, message: e.message };
+      socketMsgType = 'WS_FAILURE';
     }
 
     const socketResponse = createAction(
-      `COLLECTION_${action.toUpperCase()}`,
+      socketMsgType,
       {
         model,
         data: res,
