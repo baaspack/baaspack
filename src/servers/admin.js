@@ -1,6 +1,8 @@
 import http from 'http';
 import WebSocket from 'ws';
 
+import { hashedPasswordIfValid } from '../routes/authentication';
+
 const methodMap = {
   get: 'find',
   find: 'get',
@@ -58,7 +60,6 @@ const createCollectionRoutes = (models) => async ({ action, model, data }) => {
 
     socketMsgType = `COLLECTION_${action.toUpperCase()}_SUCCESS`;
   } catch (e) {
-    console.error(e);
     res = { action, message: e.message };
   }
 
@@ -66,7 +67,50 @@ const createCollectionRoutes = (models) => async ({ action, model, data }) => {
 };
 
 const createUserRoutes = (UserModel) => async ({ action, model, data }) => {
+  const actionToTake = methodMap[action] || action;
 
+  // eslint-disable-next-line no-underscore-dangle
+  const id = data && (data._id || data.id);
+  const { email, password } = data || {};
+
+  let res = null;
+  let socketMsgType = 'WS_FAILURE';
+  const fieldsToReturn = ['_id', 'email', 'createdAt'];
+
+  try {
+    switch (actionToTake) {
+      case 'create':
+        try {
+          const hashedPass = await hashedPasswordIfValid(UserModel, email, password);
+
+          const user = await UserModel.create({
+            email,
+            password: hashedPass,
+          });
+
+          res = { id: user.id };
+        } catch (e) {
+          res = { message: e.message };
+        }
+
+        break;
+      case 'find':
+        res = await UserModel.find(null, { selectProps: fieldsToReturn });
+        break;
+      case 'delete':
+        await UserModel.delete(id);
+        res = { id };
+        break;
+      default:
+        break;
+    }
+
+    socketMsgType = `USER_${action.toUpperCase()}_SUCCESS`;
+  } catch (e) {
+    res = { action, message: e.message };
+  }
+
+  return createAction(socketMsgType, { model, data: res });
 };
 
 const getCollectionNames = (models) => {

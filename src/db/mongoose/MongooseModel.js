@@ -1,9 +1,15 @@
 const createAppModel = (name, mongooseModel) => {
   const appModel = {
     name,
-    async find(queryObj = {}) {
-      const documents = await mongooseModel
+    async find(queryObj = {}, { selectProps } = {}) {
+      const query = mongooseModel
         .find(queryObj);
+
+      if (selectProps) {
+        query.select(selectProps.join(' '));
+      }
+
+      const documents = await query;
 
       return documents;
     },
