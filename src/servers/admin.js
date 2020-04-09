@@ -1,3 +1,4 @@
+/* eslint-disable no-case-declarations */
 import http from 'http';
 import WebSocket from 'ws';
 
@@ -80,19 +81,14 @@ const createUserRoutes = (UserModel) => async ({ action, model, data }) => {
   try {
     switch (actionToTake) {
       case 'create':
-        try {
-          const hashedPass = await hashedPasswordIfValid(UserModel, email, password);
+        const hashedPass = await hashedPasswordIfValid(UserModel, email, password);
 
-          const user = await UserModel.create({
-            email,
-            password: hashedPass,
-          });
+        const user = await UserModel.create({
+          email,
+          password: hashedPass,
+        });
 
-          res = { id: user.id };
-        } catch (e) {
-          res = { message: e.message };
-        }
-
+        res = { user };
         break;
       case 'find':
         res = await UserModel.find(null, { selectProps: fieldsToReturn });
