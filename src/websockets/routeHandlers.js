@@ -10,8 +10,8 @@ const createWebsocketRouteHandlers = (wss) => {
       client.send(JSON.stringify(message));
     },
     broadcast(message) {
-      const channelType = message.response.channelType;
-      const channelId = message.response.channelId;
+      const channelType = message.response.channelType || null;
+      const channelId = message.response.channelId || null;
       const channelName = `${channelType}_${channelId}`;
 
       if (channelType && channelId && wss.channels[channelName]) {
