@@ -74,7 +74,10 @@ const start = async () => {
 
   // Generate endpoints for storage
   models.push(generateUploadsModel());
-  createUploadsEndpoints(router, models.uploads);
+  const uploadsModel = models.find((model) => {
+    return model.name === 'uploads';
+  });
+  createUploadsEndpoints(router, uploadsModel);
 
   // setupMiddleware(app, router, authRoutes, passport);
   setupMiddleware(app, sessionParser, router, authRoutes, passport);
