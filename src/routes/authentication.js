@@ -6,41 +6,38 @@ const { catchErrors } = errorHandlers;
 
 const BCRYPT_SALT_ROUNDS = 10;
 
-const register = (User) => {
-  return async (req, res) => {
-    const { email, password } = req.body;
+export const hashedPasswordIfValid = async (UserModel, email, password) => {
+  if (!password || password.length < 3) {
+    throw new Error('Weak password');
+  }
 
-    // TODO: better way to handle password validation??
-    //  The @hapi/joi module allows us to apply schemas
-    //  to requests. Might be something to look into if this
-    //  is bad.
-    if (!password || password.length < 3) {
-      res.status(422).send({ message: 'That password is weak!' });
-    }
+  const existingUsers = await UserModel.find({ email });
+  const existingUser = existingUsers[0];
 
-    // TODO: validate unique email on the db as well?
-    //  it's nice doing it here instead of the model
-    //  since this is db agnostic. However, unique indexes
-    //  can definitely take care of this.
-    const existingUsers = await User.find({ email });
-    const existingUser = existingUsers[0];
+  if (existingUser) {
+    throw new Error('Existing user');
+  }
 
-    // TODO: Research best practices for duplicate usernames / emails.
-    //  It might be bad practice to tell a malicious actor that an
-    //  an email address is registered with our service.
-    if (existingUser) {
-      return res.status(422).send({ message: 'That email already exists!' });
-    }
+  const passwordHash = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
 
-    const passwordHash = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
+  return passwordHash;
+};
+
+const register = (User) => async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const hashedPass = await hashedPasswordIfValid(User, email, password);
 
     const user = await User.create({
       email,
-      password: passwordHash,
+      password: hashedPass,
     });
 
     res.send({ id: user.id });
-  };
+  } catch (e) {
+    res.status(422).send({ message: e.message });
+  }
 };
 
 const createAuthRoutes = (User, passport) => {
@@ -55,6 +52,8 @@ const createAuthRoutes = (User, passport) => {
       if (!user) {
         return res.status(401).json({ message: info.message });
       }
+
+      // console.log('REQ.SESSION FROM LOGIN', req.session); // holden added this
 
       req.logIn(user, (err) => {
         if (err) { return next(err); }

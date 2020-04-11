@@ -7,29 +7,33 @@ import connectRedis from 'connect-redis';
 import errorHandlers from './handlers/errorHandlers';
 import { hasApiKey } from './handlers/authorization';
 
-const RedisStore = connectRedis(session);
-const redisClient = redis.createClient({ host: process.env.REDIS_HOSTNAME });
+export const createSessionParser = () => {
+  const RedisStore = connectRedis(session);
+  const redisClient = redis.createClient({ host: process.env.REDIS_HOSTNAME });
 
-redisClient.on('connect', () => {
-  console.log('Redis:', 'connected!');
-});
+  redisClient.on('connect', () => {
+    console.log('Redis:', 'connected!');
+  });
 
-redisClient.on('error', (err) => {
-  console.error('Redis Connection Error:', err);
-});
+  redisClient.on('error', (err) => {
+    console.error('Redis Connection Error:', err);
+  });
 
-// export const sessionParser = session({
-//   store: new RedisStore({ client: redisClient }),
-//   name: '_redis',
-//   secret: process.env.SESSION_SECRET,
-//   resave: false,
-//   saveUninitialized: true,
-//   cookie: {
-//     sameSite: true,
-//   },
-// });
+  const sessionParser = session({
+    store: new RedisStore({ client: redisClient }),
+    name: '_redis',
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+      sameSite: true,
+    },
+  });
 
-const setupMiddleware = (app, routes, authRoutes, passport) => {
+  return sessionParser;
+}
+
+export const setupMiddleware = (app, sessionParser, routes, authRoutes, passport) => {
   // Enable CORS from all origins
   app.use(cors({ origin: true, credentials: true }));
 
@@ -40,18 +44,7 @@ const setupMiddleware = (app, routes, authRoutes, passport) => {
   app.use(express.urlencoded({ extended: true }));
 
   // Configure sessions
-  // app.use(sessionParser);
-
-  app.use(session({
-    store: new RedisStore({ client: redisClient }),
-    name: '_redis',
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: true,
-    cookie: {
-      sameSite: true,
-    },
-  }));
+  app.use(sessionParser);
 
   // Early exit if a request doesn't include an auth header
   app.use(hasApiKey);

@@ -12,7 +12,8 @@ import {
 } from './db/mongoose';
 
 import startWebsocketServer from './websockets';
-import setupMiddleware from './app';
+import createAdminWsServer from './servers/admin';
+import { createSessionParser, setupMiddleware, } from './app';
 import initializePassport from './handlers/authorization';
 import createAuthRoutes from './routes/authentication';
 import addRoutesFromModel from './routes';
@@ -52,8 +53,10 @@ const start = async () => {
   // Populate existing models
   const models = repopulateSeedData ? await seedDatabase() : await generateModels();
 
+  const sessionParser = createSessionParser();
+
   // Start the websocket server
-  const wss = startWebsocketServer(server, models);
+  const wss = startWebsocketServer(server, sessionParser, models);
 
   // Generate HTTP endpoints for routes
   const router = Router();
@@ -73,7 +76,10 @@ const start = async () => {
   models.push(generateUploadsModel());
   createUploadsEndpoints(router, models.uploads);
 
-  setupMiddleware(app, router, authRoutes, passport);
+  // setupMiddleware(app, router, authRoutes, passport);
+  setupMiddleware(app, sessionParser, router, authRoutes, passport);
+
+  createAdminWsServer(models, User, router, generateModel, addRoutesFromModel);
 };
 
 start();

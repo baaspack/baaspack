@@ -1,9 +1,15 @@
 const createAppModel = (name, mongooseModel) => {
   const appModel = {
     name,
-    async find(queryObj = {}) {
-      const documents = await mongooseModel
+    async find(queryObj = {}, { selectProps } = {}) {
+      const query = mongooseModel
         .find(queryObj);
+
+      if (selectProps) {
+        query.select(selectProps.join(' '));
+      }
+
+      const documents = await query;
 
       return documents;
     },
@@ -32,9 +38,23 @@ const createAppModel = (name, mongooseModel) => {
       return this.get(id);
     },
     async patch(id, data) {
+      const objToUpdate = {};
+      const fieldsToRemove = {};
+
+      Object.keys(data).forEach((key) => {
+        if (data[key] === null) {
+          fieldsToRemove[key] = 1;
+        } else {
+          objToUpdate[key] = data[key];
+        }
+      });
+
       const updatedDoc = await mongooseModel.findOneAndUpdate(
         { _id: id },
-        { $set: data },
+        {
+          $set: objToUpdate,
+          $unset: fieldsToRemove,
+        },
         { returnOriginal: false },
       );
 
