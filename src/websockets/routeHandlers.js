@@ -10,10 +10,12 @@ const createWebsocketRouteHandlers = (wss) => {
       client.send(JSON.stringify(message));
     },
     broadcast(message) {
-      console.log('WSS CHANNELS -wss.channels[message.channelId]:', wss.channels);
+      const channelType = message.response.channelType;
+      const channelId = message.response.channelId;
+      const channelName = `${channelType}_${channelId}`;
 
-      if (message.channelId && wss.channels[message.channelId]) { // WSS.CHANNELS NOT WORKING
-        wss.channels[message.channelId].connections.forEach(connection => {
+      if (channelType && channelId && wss.channels[channelName]) {
+        wss.channels[channelName].forEach(connection => {
           this.sendMessage(connection, message);
         });
       } else {
