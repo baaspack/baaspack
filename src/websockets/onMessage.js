@@ -76,32 +76,31 @@ const onMessage = (wss, ws, userId, message, models) => {
   }
 
   const joinUsersChannels = async () => {
-    // message props needed:
-    // action
-    // usersId(given in function params)
-    // usersInformationCollection
-
-    // Get user’s channels from usersInformationCollection
     const { action, usersInformationCollection } = message;
     const model = getModel(usersInformationCollection);
-    const usersChannels = await model.find({ userId: userId }).channels;
 
-    // Add user to connections array in channels array
-    usersChannels.forEach(channelId => {
-      if (!wss.channels[channelId]) {
-        wss.channels[channelId] = { connections: {} };
-      }
+    await model.find({ userId: userId })
+      .then((usersmeta) => {
+        return usersmeta[0].toObject().channels;
+      })
+      .then((channels) => {
+        channels.forEach(channel => {
+          const channelName = `${channel.channelType}_${channel.channelId}`;
 
-      wss.channels[channelId].connections[userId] = { connection: ws };
-    });
+          if (!wss.channels[channelName]) {
+            wss.channels[channelName] = [];
+          }
 
-    // Send message back to client with array of channels user belongs to
-    const message = {
-      action,
-      usersChannels,
-    }
+          wss.channels[channelName].push(ws);
+        });
 
-    wss.router.sendMessage(ws, message);
+        const responseMessage = {
+          action,
+          usersChannels: channels,
+        }
+
+        wss.router.sendMessage(ws, responseMessage);
+      });
   }
 
   const joinChannel = async () => {
@@ -127,13 +126,13 @@ const onMessage = (wss, ws, userId, message, models) => {
 
     wss.channels[channelId].connections[userId] = { connection: ws };
 
-    const message = {
+    const responseMessage = {
       action,
       channelId,
       response,
     }
 
-    wss.router.sendMessage(ws, message);
+    wss.router.sendMessage(ws, responseMessage);
   }
 
   const leaveChannel = async () => {
@@ -155,13 +154,13 @@ const onMessage = (wss, ws, userId, message, models) => {
     // delete user from connections array in channels array
     delete wss.channels[channelId].connections[userId];
 
-    const message = {
+    const responseMessage = {
       action,
       channelId,
       response,
     }
 
-    wss.router.sendMessage(ws, message);
+    wss.router.sendMessage(ws, responseMessage);
   }
 
   const changeChannel = async () => {
@@ -176,14 +175,14 @@ const onMessage = (wss, ws, userId, message, models) => {
     const model = getModel(usersInformationCollection);
     const response = await model.patch(id, { currentChannel: { name: channelType, id: channelId } });
 
-    const message = {
+    const responseMessage = {
       action,
       channelType,
       channelId,
       response
     }
 
-    wss.router.sendMessage(ws, message);
+    wss.router.sendMessage(ws, responseMessage);
   }
 
   const getModel = (collection) => {
