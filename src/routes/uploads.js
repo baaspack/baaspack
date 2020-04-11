@@ -3,7 +3,6 @@ import multer from 'multer';
 import errorHandlers from '../handlers/errorHandlers';
 import { checkAuthenticated } from '../handlers/authorization';
 
-
 const storagePath = './public/uploads';
 const storageRoute = '/uploads';
 
@@ -68,7 +67,16 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage });
+const upload = multer({
+  storage,
+  fileFilter: (req, file, cb) => {
+    if (file && req.body.filename) {
+      cb(null, true);
+    } else {
+      cb(new Error('Body must include file and filename'));
+    }
+  },
+});
 
 const createUploadsEndpoints = (router, model) => {
   const checkFileExists = (req, res, next) => {
@@ -79,18 +87,19 @@ const createUploadsEndpoints = (router, model) => {
       if (!id) {
         return res.status(404).send({ message: 'file does not exist' });
       }
+
       next();
     })();
   };
 
-  router.get(`${storageRoute}`, checkAuthenticated, errorHandlers.catchErrors(async (req, res) => {
-    model.find({ userId: req.session.passport.user })
+  router.get(`${storageRoute}/:userId`, checkAuthenticated, errorHandlers.catchErrors(async (req, res) => {
+    model.find({ userId: req.params.userId })
       .then((records) => {
         return res.json({ records });
       });
   }));
 
-  router.post(`${storageRoute}`, checkAuthenticated, upload.single('file'), errorHandlers.catchErrors(async (req, res) => {
+  router.post(`${storageRoute}`, upload.single('file'), errorHandlers.catchErrors(async (req, res) => {
     const { file } = req;
 
     if (!file) {
@@ -145,7 +154,6 @@ const createUploadsEndpoints = (router, model) => {
 
     res.json({ message: 'file overwritten' });
   }));
-
 };
 
 export default createUploadsEndpoints;
