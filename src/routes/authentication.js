@@ -34,7 +34,10 @@ const register = (User) => async (req, res) => {
       password: hashedPass,
     });
 
-    res.send({ id: user.id });
+    req.logIn(user, (err) => {
+      if (err) { return next(err); }
+      return res.send({ id: user.id });
+    });
   } catch (e) {
     res.status(422).send({ message: e.message });
   }
