@@ -1,16 +1,13 @@
-const onClose = (wss, client, data) => { // do I need data?
+const onClose = (wss, ws, userId, data) => { // do I need data?
   // Remove user from connections array
   // Remove user from connections array in channels array
-  // Update the following in the UserMeta/UserInformation table:
-  //   online: boolean
-  //   timeclose: ws on close time
 
   const message = {
     action: 'close',
-    userId: client.userId,
+    userId: ws.userId,
   };
 
-  wss.router.broadcast(client, message);
+  wss.router.broadcast(ws, message);
 }
 
 export default onClose;
