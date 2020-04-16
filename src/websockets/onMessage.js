@@ -111,13 +111,13 @@ const onMessage = (wss, ws, userId, message, models) => {
     const usersChannels = [...usersmeta.channels, { channelType, channelId, channelName, creatorId }];
 
     const response = await model.patch(usersmeta._id, { channels: usersChannels });
-    const channelName = `${channelType}_${channelId}`;
+    const channelsChannelName = `${channelType}_${channelId}`;
 
-    if (!wss.channels[channelName]) {
-      wss.channels[channelName] = [];
+    if (!wss.channels[channelsChannelName]) {
+      wss.channels[channelsChannelName] = [];
     }
 
-    wss.channels[channelName].push(ws);
+    wss.channels[channelsChannelName].push(ws);
 
     const responseMessage = {
       action,
