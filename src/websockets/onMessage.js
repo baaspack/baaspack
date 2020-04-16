@@ -55,7 +55,6 @@ const onMessage = (wss, ws, userId, message, models) => {
     wss.router.broadcast({ action, collection, response });
   }
 
-  // implement open properly
   const open = () => {
     const { action } = message;
 
@@ -65,7 +64,6 @@ const onMessage = (wss, ws, userId, message, models) => {
     });
   }
 
-  // implement close properly
   const close = () => {
     const { action } = message;
 
@@ -79,7 +77,8 @@ const onMessage = (wss, ws, userId, message, models) => {
     const { action, usersInformationCollection } = message;
     const model = getModel(usersInformationCollection);
 
-    await model.find({ userId: userId })
+    model.find({ userId: userId }) // does this still work?
+      // await model.find({ userId: userId })
       .then((usersmeta) => {
         return usersmeta[0].toObject().channels;
       })
@@ -104,35 +103,30 @@ const onMessage = (wss, ws, userId, message, models) => {
   }
 
   const joinChannel = async () => {
-    // message props needed:
-    // action
-    // usersId(given in function params)
-    // usersInformationCollection
-    // channelId of channel to join
-
-    // Get user’s channels from usersInformationCollection
-    const { action, usersInformationCollection, channelId } = message;
+    const { action, usersInformationCollection, channelType, channelId } = message;
     const model = getModel(usersInformationCollection);
     let usersChannels = await model.find({ userId: userId }).channels;
     userChannels = [...usersChannels, channelId];
 
-    // Update channels array field on UsersMeta - add channel to array
     const response = await model.patch(id, { channels: userChannels });
 
-    // Add user to connections array in channels array
-    if (!wss.channels[channelId]) {
-      wss.channels[channelId] = { connections: {} };
+    const channelName = `${channel.channelType}_${channel.channelId}`;
+
+    if (!wss.channels[channelName]) {
+      wss.channels[channelName] = [];
     }
 
-    wss.channels[channelId].connections[userId] = { connection: ws };
+    wss.channels[channelName].push(ws);
 
     const responseMessage = {
       action,
+      userId,
+      channelType,
       channelId,
       response,
     }
 
-    wss.router.sendMessage(ws, responseMessage);
+    wss.router.broadcast(responseMessage);
   }
 
   const leaveChannel = async () => {
@@ -160,7 +154,7 @@ const onMessage = (wss, ws, userId, message, models) => {
       response,
     }
 
-    wss.router.sendMessage(ws, responseMessage);
+    wss.router.sendMessage(ws, responseMessage);  // if subscribed to channel(s), broadcast to those connections too
   }
 
   const changeChannel = async () => {
