@@ -10,12 +10,6 @@ const startWebsocketServer = (server, sessionParser, models) => {
   wss.connections = {};
   wss.channels = {};
 
-  function noop() { }
-
-  function heartbeat() {
-    this.isAlive = true;
-  }
-
   server.on('upgrade', (req, socket, head) => {
 
     sessionParser(req, {}, () => {
@@ -33,8 +27,6 @@ const startWebsocketServer = (server, sessionParser, models) => {
   wss.on('connection', (ws, req) => {
     const userId = req.session.passport.user;
 
-    ws.isAlive = true;
-    ws.on('pong', heartbeat);
     onConnection(wss, ws, userId);
 
     ws.on('message', (data) => {
@@ -46,17 +38,7 @@ const startWebsocketServer = (server, sessionParser, models) => {
     });
   });
 
-  const interval = setInterval(function ping() {
-    wss.clients.forEach(function each(ws) {
-      if (ws.isAlive === false) return ws.terminate();
-
-      ws.isAlive = false;
-      ws.ping(noop);
-    });
-  }, 30000);
-
   wss.on('close', () => {
-    clearInterval(interval);
   });
 
   return wss;
