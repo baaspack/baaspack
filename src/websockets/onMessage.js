@@ -73,12 +73,11 @@ const onMessage = (wss, ws, userId, message, models) => {
     });
   }
 
-  const joinUsersChannels = async () => {
+  const joinUsersChannels = () => {
     const { action, usersInformationCollection } = message;
     const model = getModel(usersInformationCollection);
 
-    model.find({ userId: userId }) // does this still work?
-      // await model.find({ userId: userId })
+    model.find({ userId: userId })
       .then((usersmeta) => {
         return usersmeta[0].toObject().channels;
       })
@@ -97,6 +96,8 @@ const onMessage = (wss, ws, userId, message, models) => {
           action,
           usersChannels: channels,
         }
+
+        console.log('WSS CHANNELS', wss.channels);
 
         wss.router.sendMessage(ws, responseMessage);
       });
