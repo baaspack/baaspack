@@ -104,10 +104,10 @@ const onMessage = (wss, ws, userId, message, models) => {
   }
 
   const joinChannel = async () => {
-    const { action, usersInformationCollection, channelType, channelId } = message;
+    const { action, usersInformationCollection, channelType, channelId, channelName, creatorId } = message;
     const model = getModel(usersInformationCollection);
     let usersChannels = await model.find({ userId: userId }).channels;
-    userChannels = [...usersChannels, channelId];
+    userChannels = [...usersChannels, { channelType, channelId, channelName, creatorId }];
 
     const response = await model.patch(id, { channels: userChannels });
     const channelName = `${channelType}_${channelId}`;
