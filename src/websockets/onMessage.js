@@ -130,31 +130,26 @@ const onMessage = (wss, ws, userId, message, models) => {
   }
 
   const leaveChannel = async () => {
-    // message props needed:
-    // action
-    // usersId(given in function params)
-    // usersInformationCollection
-    // channelId of channel to leave
-
-    // Get user’s channels from usersInformationCollection
-    const { action, usersInformationCollection, channelId } = message;
+    const { action, usersInformationCollection, channelType, channelId } = message;
     const model = getModel(usersInformationCollection);
+
     let usersChannels = await model.find({ userId: userId }).channels;
     usersChannels = usersChannels.filter(channel => channel.id !== channelId);
 
-    // Update channels array field on UsersMeta - delete channel from array
     const response = await model.patch(id, { channels: userChannels });
+    const channelName = `${channelType}_${channelId}`;
 
-    // delete user from connections array in channels array
-    delete wss.channels[channelId].connections[userId];
+    wss.channels[channelName] = wss.channels[channelName].filter((connection) => connection !== ws);
 
     const responseMessage = {
       action,
+      userId,
+      channelType,
       channelId,
       response,
     }
 
-    wss.router.sendMessage(ws, responseMessage);  // if subscribed to channel(s), broadcast to those connections too
+    wss.router.broadcast(responseMessage);
   }
 
   const changeChannel = async () => {
