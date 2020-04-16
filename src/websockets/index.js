@@ -7,12 +7,8 @@ import onClose from './onClose';
 const startWebsocketServer = (server, sessionParser, models) => {
   const wss = new WebSocket.Server({ noServer: true });
   wss.router = createWebsocketRouteHandlers(wss);
-
-  function noop() { }
-
-  function heartbeat() {
-    this.isAlive = true;
-  }
+  wss.connections = {};
+  wss.channels = {};
 
   server.on('upgrade', (req, socket, head) => {
 
@@ -29,30 +25,20 @@ const startWebsocketServer = (server, sessionParser, models) => {
   });
 
   wss.on('connection', (ws, req) => {
-    ws.isAlive = true;
-    ws.on('pong', heartbeat);
-    onConnection(wss, ws);
+    const userId = req.session.passport.user;
+
+    onConnection(wss, ws, userId);
 
     ws.on('message', (data) => {
-      onMessage(wss, ws, JSON.parse(data), models);
+      onMessage(wss, ws, userId, JSON.parse(data), models);
     });
 
     ws.on('close', (data) => {
-      onClose(wss, ws, JSON.parse(data));
+      onClose(wss, ws, userId, JSON.parse(data));
     });
   });
 
-  const interval = setInterval(function ping() {
-    wss.clients.forEach(function each(ws) {
-      if (ws.isAlive === false) return ws.terminate();
-
-      ws.isAlive = false;
-      ws.ping(noop);
-    });
-  }, 30000);
-
   wss.on('close', () => {
-    clearInterval(interval);
   });
 
   return wss;

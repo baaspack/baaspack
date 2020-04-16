@@ -24,7 +24,8 @@ import createUploadsEndpoints from './routes/uploads';
 dotenv.config();
 
 // Set a flag for whether to reseed the database
-const repopulateSeedData = process.env.SEED_DB;
+// const repopulateSeedData = process.env.SEED_DB;
+const repopulateSeedData = false;
 
 // Set DB connection options
 const dbConnectionOptions = {
