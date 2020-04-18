@@ -99,7 +99,7 @@ const createUploadsEndpoints = (router, model) => {
       });
   }));
 
-  router.post(`${storageRoute}`, upload.single('file'), errorHandlers.catchErrors(async (req, res) => {
+  router.post(`${storageRoute}`, checkAuthenticated, upload.single('file'), errorHandlers.catchErrors(async (req, res) => {
     const { file } = req;
 
     if (!file) {
