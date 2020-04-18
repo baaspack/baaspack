@@ -122,10 +122,10 @@ const onMessage = (wss, ws, userId, message, models) => {
       userId,
       channelType,
       channelId,
-      response,
     }
 
-    wss.router.broadcast(responseMessage);
+    wss.router.broadcast(responseMessage); // don't sent to ws
+    wss.router.sendMessage(ws, Object.assign(responseMessage, { response }));
   }
 
   const leaveChannel = async () => {
@@ -138,7 +138,6 @@ const onMessage = (wss, ws, userId, message, models) => {
     // remove the channel that the user is leaving from usersmeta channels
     const usersChannels = usersmeta.channels.filter((channel) => channel.channelId !== channelId);
     const _response = await model.patch(usersmeta._id, { channels: usersChannels });
-
 
     // get updated list of usersmeta channels and filter channels by channelType
     const updatedUsersmeta = unfreezeObject(await model.find({ userId: userId }))[0];
@@ -162,14 +161,17 @@ const onMessage = (wss, ws, userId, message, models) => {
       userId,
       channelType,
       channelId,
-      response,
     }
 
-    wss.router.broadcast(responseMessage);
+    wss.router.broadcast(responseMessage); // don't sent to ws
+    wss.router.sendMessage(ws, Object.assign(responseMessage, { response }));
 
     // remove ws from wss.channels array
     const channelName = `${channelType}_${channelId}`;
-    wss.channels[channelName] = wss.channels[channelName].filter((connection) => connection !== ws);
+
+    if (wss.channels[channelName]) {
+      wss.channels[channelName] = wss.channels[channelName].filter((connection) => connection !== ws);
+    }
   }
 
   const deleteChannel = async () => {
@@ -223,7 +225,8 @@ const onMessage = (wss, ws, userId, message, models) => {
       channelId,
     }
 
-    wss.router.broadcast(responseMessage);
+    wss.router.broadcast(responseMessage); // don't sent to ws
+    wss.router.sendMessage(ws, Object.assign(responseMessage, { response: updateUsersmetaCurrentChannelsResponse }));
 
     // remove ws from wss.channels array
     const channelName = `${channelType}_${channelId}`;
