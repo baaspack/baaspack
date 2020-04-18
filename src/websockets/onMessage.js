@@ -97,8 +97,6 @@ const onMessage = (wss, ws, userId, message, models) => {
           usersChannels: channels,
         }
 
-        console.log('WSS CHANNELS', wss.channels);
-
         wss.router.sendMessage(ws, responseMessage);
       });
   }
@@ -107,8 +105,8 @@ const onMessage = (wss, ws, userId, message, models) => {
     const { action, usersInformationCollection, channelType, channelId } = message;
     const model = getModel(usersInformationCollection);
 
-    const usersmeta = await model.find({ userId: userId });
-    const usersChannels = [...usersmeta.channels, { channelType, channelId }];
+    const usersmeta = unfreezeObject(await model.find({ userId: userId }))[0];
+    const usersChannels = usersmeta.channels.concat({ channelType, channelId });
 
     const response = await model.patch(usersmeta._id, { channels: usersChannels });
     const channelName = `${channelType}_${channelId}`;
@@ -174,9 +172,9 @@ const onMessage = (wss, ws, userId, message, models) => {
     return models.find((model) => model.name === collection);
   }
 
-  const { action } = message;
+  const unfreezeObject = (obj) => JSON.parse(JSON.stringify(obj));
 
-  console.log('MESSAGE FROM ONMESSAGE', message);
+  const { action } = message;
 
   switch (action) {
     case 'find':
