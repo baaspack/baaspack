@@ -19,16 +19,22 @@ export const createSessionParser = () => {
     console.error('Redis Connection Error:', err);
   });
 
-  const sessionParser = session({
+  const sessionOptions = {
     store: new RedisStore({ client: redisClient }),
     name: '_redis',
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: true,
     cookie: {
-      sameSite: true,
+      httpOnly: true,
     },
-  });
+  };
+
+  if (process.env.NODE_ENV === 'production') {
+    sessionOptions.cookie.secure = true;
+  }
+
+  const sessionParser = session(sessionOptions);
 
   return sessionParser;
 }
@@ -42,6 +48,10 @@ export const setupMiddleware = (app, sessionParser, routes, authRoutes, passport
 
   // Parse Url Encoded request bodies, typically sent from forms.
   app.use(express.urlencoded({ extended: true }));
+
+  if (app.get('env') === 'production') {
+    app.set('trust proxy', 1) // trust first proxy
+  }
 
   // Configure sessions
   app.use(sessionParser);
