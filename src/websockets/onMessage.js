@@ -130,16 +130,33 @@ const onMessage = (wss, ws, userId, message, models) => {
 
   const leaveChannel = async () => {
     const { action, usersInformationCollection, channelType, channelId } = message;
+
+    // get usersmeta
     const model = getModel(usersInformationCollection);
+    const usersmeta = unfreezeObject(await model.find({ userId: userId }))[0];
 
-    const usersmeta = await model.find({ userId: userId });
-    const usersChannels = usersmeta.channels.filter(channel => channel.id !== channelId);
+    // remove the channel that the user is leaving from usersmeta channels
+    const usersChannels = usersmeta.channels.filter((channel) => channel.channelId !== channelId);
+    const _response = await model.patch(usersmeta._id, { channels: usersChannels });
 
-    const response = await model.patch(usersmeta._id, { channels: usersChannels });
-    const channelName = `${channelType}_${channelId}`;
 
-    wss.channels[channelName] = wss.channels[channelName].filter((connection) => connection !== ws);
+    // get updated list of usersmeta channels and filter channels by channelType
+    const updatedUsersmeta = unfreezeObject(await model.find({ userId: userId }))[0];
+    const usersChannelsOfChannelType = updatedUsersmeta.channels.filter((channel) => channel.channelType == channelType);
 
+    // update user's currentChannel
+    let updateCurrentChannel;
+
+    if (usersChannelsOfChannelType.length > 0) {
+      const firstChannel = usersChannelsOfChannelType[0];
+      updateCurrentChannel = { channelType: firstChannel.channelType, channelId: firstChannel.channelId };
+    } else {
+      updateCurrentChannel = { channelType: null, channelId: null };
+    }
+
+    const response = await model.patch(usersmeta._id, { currentChannel: updateCurrentChannel });
+
+    // broadcast response
     const responseMessage = {
       action,
       userId,
@@ -149,6 +166,10 @@ const onMessage = (wss, ws, userId, message, models) => {
     }
 
     wss.router.broadcast(responseMessage);
+
+    // remove ws from wss.channels array
+    const channelName = `${channelType}_${channelId}`;
+    wss.channels[channelName] = wss.channels[channelName].filter((connection) => connection !== ws);
   }
 
   const changeChannel = async () => {
