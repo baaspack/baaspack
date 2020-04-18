@@ -172,6 +172,63 @@ const onMessage = (wss, ws, userId, message, models) => {
     wss.channels[channelName] = wss.channels[channelName].filter((connection) => connection !== ws);
   }
 
+  const deleteChannel = async () => {
+    const { action, usersInformationCollection, channelMessagesCollection, channelType, channelId } = message;
+
+    // delete all channel messages
+    const channelMessagesModel = getModel(channelMessagesCollection);
+    const messages = await channelMessagesModel.find();
+
+    messages.forEach(async (message) => {
+      if (message.channelType === channelType && message.channelId === channelId) {
+        let deleteMessageResponse = await channelMessagesModel.delete(message.channelId);
+      }
+    });
+
+    // delete channel
+    const channelModel = getModel(message.channelType);
+    const deleteChannelResponse = await channelModel.delete(channelId);
+
+    // get usersmeta
+    const model = getModel(usersInformationCollection);
+    const usersmeta = unfreezeObject(await model.find({ userId: userId }))[0];
+
+    // remove the channel that the user is deleting from usersmeta channels
+    const usersChannels = usersmeta.channels.filter((channel) => channel.channelId !== channelId);
+    const updateUsersmetaChannelsResponse = await model.patch(usersmeta._id, { channels: usersChannels });
+
+    // get updated list of usersmeta channels and filter channels by channelType
+    const updatedUsersmeta = unfreezeObject(await model.find({ userId: userId }))[0];
+    const usersChannelsOfChannelType = updatedUsersmeta.channels.filter((channel) => channel.channelType == channelType);
+
+    // update user's currentChannel
+    let updateCurrentChannel;
+
+    if (usersChannelsOfChannelType.length > 0) {
+      const firstChannel = usersChannelsOfChannelType[0];
+      updateCurrentChannel = { channelType: firstChannel.channelType, channelId: firstChannel.channelId };
+    } else {
+      updateCurrentChannel = { channelType: null, channelId: null };
+    }
+
+    const updateUsersmetaCurrentChannelsResponse = await model.patch(usersmeta._id, { currentChannel: updateCurrentChannel });
+
+    // broadcast response
+    const responseMessage = {
+      action,
+      userId,
+      channelType,
+      channelId,
+    }
+
+    wss.router.broadcast(responseMessage);
+
+    // remove ws from wss.channels array
+    const channelName = `${channelType}_${channelId}`;
+    delete wss.channels[channelName];
+  }
+
+
   const changeChannel = async () => {
     const { action, usersInformationCollection, channelType, channelId } = message;
     const model = getModel(usersInformationCollection);
@@ -243,6 +300,9 @@ const onMessage = (wss, ws, userId, message, models) => {
       break;
     case 'changeChannel':
       changeChannel();
+      break;
+    case 'deleteChannel':
+      deleteChannel();
       break;
     default:
       wss.router.sendMessage(client, {
