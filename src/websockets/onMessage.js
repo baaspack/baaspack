@@ -104,20 +104,20 @@ const onMessage = (wss, ws, userId, message, models) => {
   }
 
   const joinChannel = async () => {
-    const { action, usersInformationCollection, channelType, channelId, channelName, creatorId } = message;
+    const { action, usersInformationCollection, channelType, channelId } = message;
     const model = getModel(usersInformationCollection);
 
     const usersmeta = await model.find({ userId: userId });
-    const usersChannels = [...usersmeta.channels, { channelType, channelId, channelName, creatorId }];
+    const usersChannels = [...usersmeta.channels, { channelType, channelId }];
 
     const response = await model.patch(usersmeta._id, { channels: usersChannels });
-    const channelsChannelName = `${channelType}_${channelId}`;
+    const channelName = `${channelType}_${channelId}`;
 
-    if (!wss.channels[channelsChannelName]) {
-      wss.channels[channelsChannelName] = [];
+    if (!wss.channels[channelName]) {
+      wss.channels[channelName] = [];
     }
 
-    wss.channels[channelsChannelName].push(ws);
+    wss.channels[channelName].push(ws);
 
     const responseMessage = {
       action,
@@ -154,17 +154,16 @@ const onMessage = (wss, ws, userId, message, models) => {
   }
 
   const changeChannel = async () => {
-    const { action, usersInformationCollection, channelType, channelId, channelName, creatorId } = message;
+    const { action, usersInformationCollection, channelType, channelId } = message;
     const model = getModel(usersInformationCollection);
 
     const usersmeta = await model.find({ userId: userId });
-    const response = await model.patch(usersmeta._id, { currentChannel: { channelType, channelId, channelName, creatorId } });
+    const response = await model.patch(usersmeta._id, { currentChannel: { channelType, channelId } });
 
     const responseMessage = {
       action,
       userId,
       channelType,
-      channelId,
       response,
     }
 
