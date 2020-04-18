@@ -180,8 +180,10 @@ const onMessage = (wss, ws, userId, message, models) => {
     const messages = await channelMessagesModel.find();
 
     messages.forEach(async (message) => {
-      if (message.channelType === channelType && message.channelId === channelId) {
-        let deleteMessageResponse = await channelMessagesModel.delete(message.channelId);
+      const messageCopy = unfreezeObject(message);
+
+      if (messageCopy.channelType === channelType && messageCopy.channelId === channelId) {
+        let deleteMessageResponse = await channelMessagesModel.delete(messageCopy._id);
       }
     });
 
@@ -227,7 +229,6 @@ const onMessage = (wss, ws, userId, message, models) => {
     const channelName = `${channelType}_${channelId}`;
     delete wss.channels[channelName];
   }
-
 
   const changeChannel = async () => {
     const { action, usersInformationCollection, channelType, channelId } = message;
