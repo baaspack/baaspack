@@ -11,8 +11,26 @@ const createWebsocketRouteHandlers = (wss) => {
       client.send(JSON.stringify(message));
     },
     broadcast(message) {
+      // if collection is usersmeta, only send to ws with userId set to usersId
+      // => we need to set a userId property to the correct wss.clients ws object
+
+      if (message.collection === 'usersmeta') {
+        wss.clients.forEach(client => {
+          if (client.userId === message.response.userId) {
+            client.sendMessage(message)
+          }
+        });
+
+        return;
+      }
+
+      console.log('MESSAGE FROM BROADCAST', message);
+
       let channelType;
       let channelId;
+
+
+
 
       // messages for http responses will have a response object
       // regular messages will not
@@ -28,6 +46,7 @@ const createWebsocketRouteHandlers = (wss) => {
       }
 
       const channelName = `${channelType}_${channelId}`;
+
 
       if (channelType && channelId && wss.channels[channelName]) {
         wss.channels[channelName].forEach(connection => {
