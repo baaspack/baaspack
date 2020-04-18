@@ -26,6 +26,7 @@ const startWebsocketServer = (server, sessionParser, models) => {
 
   wss.on('connection', (ws, req) => {
     const userId = req.session.passport.user;
+    ws.userId = userId;
 
     onConnection(wss, ws, userId);
 
