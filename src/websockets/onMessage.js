@@ -239,7 +239,8 @@ const onMessage = (wss, ws, userId, message, models) => {
     const model = getModel(usersInformationCollection);
 
     const usersmeta = unfreezeObject(await model.find({ userId: userId }))[0];
-    const response = await model.patch(usersmeta._id, { currentChannel: { channelType, channelId } });
+    const channel = { channelType, channelId };
+    const response = await model.patch(usersmeta._id, { currentChannel: channel });
 
     const responseMessage = {
       action,
