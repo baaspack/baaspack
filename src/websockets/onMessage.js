@@ -198,7 +198,7 @@ const onMessage = (wss, ws, userId, message, models) => {
     const model = getModel(usersInformationCollection);
     const usersmeta = unfreezeObject(await model.find());
 
-    // iterate through all ws clients. if the channel that's being deleted is in their channels usermeta,
+    // iterate through all ws clients. if the channel that's being deleted is in the user's channels usermeta,
     // delete it, and reset their currentChannel property if necessary
     // broadcast the response back to each client individually
     usersmeta.forEach(async (usermeta) => {
