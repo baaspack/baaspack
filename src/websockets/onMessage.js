@@ -194,53 +194,56 @@ const onMessage = (wss, ws, userId, message, models) => {
     const channelModel = getModel(message.channelType);
     const deleteChannelResponse = await channelModel.delete(channelId);
 
-
-
-
-
-    // get usersmeta
+    // get usermeta
     const model = getModel(usersInformationCollection);
-    const usersmeta = unfreezeObject(await model.find({ userId: userId }))[0];
+    const usersmeta = unfreezeObject(await model.find());
 
-    // remove the channel that the user is deleting from usersmeta channels
-    const usersChannels = usersmeta.channels.filter((channel) => channel.channelId !== channelId);
+    // iterate through all ws clients. if the channel that's being deleted is in their channels usermeta,
+    // delete it, and reset their currentChannel property if necessary
+    // broadcast the response back to each client individually
+    usersmeta.forEach(async (usermeta) => {
+      for (let i = 0; i < usermeta.channels.length; i += 1) {
+        if (usermeta.channels[i].channelType === channelType && usermeta.channels[i].channelId === channelId) {
 
+          // remove the channel that the user is deleting from usermeta channels
+          const usersChannels = usermeta.channels.filter((channel) => channel.channelId !== channelId);
+          const usersChannelsOfChannelType = usersChannels.filter((channel) => channel.channelType == channelType);
 
+          // update user's currentChannel
+          let usersCurrentChannel = usermeta.currentChannel;
 
-    // const updateUsersmetaChannelsResponse = await model.patch(usersmeta._id, { channels: usersChannels });
+          if (usersCurrentChannel.channelType === channelType && usersCurrentChannel.channelId === channelId) {
+            if (usersChannelsOfChannelType.length > 0) {
+              const firstChannel = usersChannelsOfChannelType[0];
+              usersCurrentChannel = { channelType: firstChannel.channelType, channelId: firstChannel.channelId };
+            } else {
+              usersCurrentChannel = { channelType: null, channelId: null };
+            }
+          }
 
-    // // get updated list of usersmeta channels and filter channels by channelType
-    // const updatedUsersmeta = unfreezeObject(await model.find({ userId: userId }))[0];
-    // const usersChannelsOfChannelType = updatedUsersmeta.channels.filter((channel) => channel.channelType == channelType);
+          const response = await model.patch(usermeta._id, { channels: usersChannels, currentChannel: usersCurrentChannel });
 
+          // broadcast response
+          const responseMessage = {
+            action,
+            userId,
+            channelType,
+            channelId,
+            response,
+          }
 
+          // remove ws from wss.channels array
+          const channelName = `${channelType}_${channelId}`;
 
-    const usersChannelsOfChannelType = usersChannels.filter((channel) => channel.channelType == channelType);
+          if (wss.channels[channelName]) {
+            wss.channels[channelName] = wss.channels[channelName].filter((connection) => connection.userId !== usersmeta.userId);
+          }
 
-    // update user's currentChannel
-    let usersCurrentChannel = usersmeta.currentChannel;
-
-    if (usersCurrentChannel.channelType === channelType && usersCurrentChannel.channelId === channelId) {
-      if (usersChannelsOfChannelType.length > 0) {
-        const firstChannel = usersChannelsOfChannelType[0];
-        usersCurrentChannel = { channelType: firstChannel.channelType, channelId: firstChannel.channelId };
-      } else {
-        usersCurrentChannel = { channelType: null, channelId: null };
+          wss.router.sendMessageToUser(usermeta.userId, responseMessage);
+          break;
+        }
       }
-    }
-
-    const response = await model.patch(usersmeta._id, { channels: usersChannels, currentChannel: usersCurrentChannel });
-
-    // broadcast response
-    const responseMessage = {
-      action,
-      userId,
-      channelType,
-      channelId,
-    }
-
-    wss.router.broadcast(responseMessage); // don't sent to ws
-    wss.router.sendMessage(ws, Object.assign(responseMessage, { response }));
+    });
 
     // remove ws from wss.channels array
     const channelName = `${channelType}_${channelId}`;
