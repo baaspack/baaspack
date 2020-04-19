@@ -234,6 +234,7 @@ const onMessage = (wss, ws, userId, message, models) => {
     delete wss.channels[channelName];
   }
 
+  // done
   const changeChannel = async () => {
     const { action, usersInformationCollection, channelType, channelId } = message;
     const model = getModel(usersInformationCollection);
