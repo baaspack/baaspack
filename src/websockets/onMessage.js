@@ -106,9 +106,10 @@ const onMessage = (wss, ws, userId, message, models) => {
     const model = getModel(usersInformationCollection);
 
     const usersmeta = unfreezeObject(await model.find({ userId: userId }))[0];
-    const usersChannels = usersmeta.channels.concat({ channelType, channelId });
+    const channel = { channelType, channelId };
+    const usersChannels = usersmeta.channels.concat(channel);
 
-    const response = await model.patch(usersmeta._id, { channels: usersChannels });
+    const response = await model.patch(usersmeta._id, { channels: usersChannels, currentChannel: channel });
     const channelName = `${channelType}_${channelId}`;
 
     if (!wss.channels[channelName]) {
