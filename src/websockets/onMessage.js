@@ -101,6 +101,51 @@ const onMessage = (wss, ws, userId, message, models) => {
       });
   }
 
+  const createChannel = async () => {
+    const { action, usersInformationCollection, channelType, name } = message;
+
+    // create new channel
+    const channelModel = getModel(channelType);
+    const data = { channelType, name, userId: userId };
+    const createChannelResponse = await channelModel.create(data);
+    const channelId = unfreezeObject(createChannelResponse._id);
+    console.log('channelId', channelId);
+    console.log('createChannelResponse', createChannelResponse);
+
+    // get usersmeta
+    const usersmetaModel = getModel(usersInformationCollection);
+    const usersmeta = unfreezeObject(await usersmetaModel.find({ userId: userId }))[0];
+
+    // update user's currentChannel and channels
+    const usersCurrentChannel = { channelType, channelId };
+    console.log('usersCurrentChannel', usersCurrentChannel);
+    const usersChannels = usersmeta.channels.concat(usersCurrentChannel);
+    const _updateUsermetaResponse = await usersmetaModel.patch(usersmeta._id, { channels: usersChannels, currentChannel: usersCurrentChannel });
+
+    const responseMessage = {
+      action,
+      response: createChannelResponse,
+    }
+
+    console.log('usersChannels', usersChannels);
+    console.log('usersCurrentChannel', usersCurrentChannel);
+
+    // send message to all other ws connections
+    wss.router.broadcastButNotToOwner(ws, responseMessage);
+
+    // add user's ws to channels array in channel object
+    const channelsChannelName = `${channelType}_${channelId}`;
+
+    if (!wss.channels[channelsChannelName]) {
+      wss.channels[channelsChannelName] = [];
+    }
+
+    wss.channels[channelsChannelName].push(ws);
+
+    // send message to creator ws connection
+    wss.router.sendMessage(ws, Object.assign({}, responseMessage, { usersChannels, usersCurrentChannel }));
+  }
+
   const joinChannel = async () => {
     const { action, usersInformationCollection, channelType, channelId } = message;
     const model = getModel(usersInformationCollection);
@@ -314,6 +359,9 @@ const onMessage = (wss, ws, userId, message, models) => {
       break;
     case 'joinUsersChannels':
       joinUsersChannels();
+      break;
+    case 'createChannel':
+      createChannel();
       break;
     case 'joinChannel':
       joinChannel();
