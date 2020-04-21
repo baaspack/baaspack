@@ -3,8 +3,8 @@
 const createWebsocketRouteHandlers = (wss) => {
   const unfreezeObject = (obj) => JSON.parse(JSON.stringify(obj));
 
-  const isUsermeta = (collection) => {
-    return collection === 'usersmeta';
+  const doNotBroadcast = (message) => {
+    return message.response && 'broadcast' in message.response && message.response.broadcast === 'false';
   }
 
   const getChannelInfo = (message) => {
@@ -46,8 +46,31 @@ const createWebsocketRouteHandlers = (wss) => {
         }
       })
     },
+    broadcastButNotToOwner(owner, message) {
+      if (doNotBroadcast(message)) {
+        this.sendToOwner(message);
+        return;
+      }
+
+      const { channelType, channelId } = getChannelInfo(message);
+      const channelName = `${channelType}_${channelId}`;
+
+      if (channelType && channelId && wss.channels[channelName]) {
+        wss.channels[channelName].forEach(client => {
+          if (client !== owner) {
+            this.sendMessage(client, message);
+          }
+        });
+      } else {
+        wss.clients.forEach((client) => {
+          if (client !== owner) {
+            this.sendMessage(client, message);
+          }
+        });
+      }
+    },
     broadcast(message) {
-      if (isUsermeta(message.collection)) {
+      if (doNotBroadcast(message)) {
         this.sendToOwner(message);
         return;
       }
