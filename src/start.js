@@ -71,7 +71,7 @@ const start = async () => {
   const authRoutes = createAuthRoutes(User, passport);
 
   // Generate endpoints for collections
-  createCollectionEndpoints(router, getCollectionNames, generateModel, addRoutesFromModel, wss);
+  createCollectionEndpoints(router, models, getCollectionNames, generateModel, addRoutesFromModel, wss);
 
   // Generate endpoints for storage
   models.push(generateUploadsModel());
