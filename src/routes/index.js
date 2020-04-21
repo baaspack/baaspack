@@ -24,8 +24,8 @@ const createGenericRoutes = (model, wss) => {
       path: `/${model.name}/`,
       handler: async (req, res) => {
         const resource = await model.create(req.body);
-
         wss.router.handleHttpRequest('create', model.name, resource);
+
         res.send(resource);
       },
     }, {

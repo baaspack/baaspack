@@ -1,4 +1,4 @@
-const createCollectionEndpoints = (router, getCollectionNames, generateModel, addRoutesFromModel) => {
+const createCollectionEndpoints = (router, getCollectionNames, generateModel, addRoutesFromModel, wss) => {
   router.get('/Collections/', async (req, res) => {
     const collectionNames = await getCollectionNames();
 
@@ -10,7 +10,7 @@ const createCollectionEndpoints = (router, getCollectionNames, generateModel, ad
 
     const newModel = await generateModel(collectionName);
 
-    addRoutesFromModel(router, newModel);
+    addRoutesFromModel(router, newModel, wss);
 
     return res.send(collectionName);
   });
