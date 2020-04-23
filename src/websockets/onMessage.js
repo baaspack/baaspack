@@ -4,7 +4,7 @@ const onMessage = (wss, ws, userId, message, models) => {
     const model = getModel(collection);
     const response = await model.find(query);
 
-    wss.router.sendMessage(ws, { action, response });
+    wss.router.sendMessage(ws, { action, collection, response });
   }
 
   const getOne = async () => {
@@ -56,21 +56,15 @@ const onMessage = (wss, ws, userId, message, models) => {
   }
 
   const open = () => {
-    const { action } = message;
-
-    wss.router.broadcast({
-      action,
-      userId,
-    });
+    wss.router.broadcast(Object.assign(message, { userId }));
   }
 
   const close = () => {
-    const { action } = message;
+    wss.router.broadcast(Object.assign(message, { userId }));
+  }
 
-    wss.router.broadcast({
-      action,
-      userId,
-    });
+  const broadcast = () => {
+    wss.router.broadcast(Object.assign(message, { userId }));
   }
 
   const joinUsersChannels = () => {
@@ -109,8 +103,6 @@ const onMessage = (wss, ws, userId, message, models) => {
     const data = { channelType, name, userId: userId };
     const createChannelResponse = await channelModel.create(data);
     const channelId = unfreezeObject(createChannelResponse._id);
-    console.log('channelId', channelId);
-    console.log('createChannelResponse', createChannelResponse);
 
     // get usersmeta
     const usersmetaModel = getModel(usersInformationCollection);
@@ -118,7 +110,6 @@ const onMessage = (wss, ws, userId, message, models) => {
 
     // update user's currentChannel and channels
     const usersCurrentChannel = { channelType, channelId };
-    console.log('usersCurrentChannel', usersCurrentChannel);
     const usersChannels = usersmeta.channels.concat(usersCurrentChannel);
     const _updateUsermetaResponse = await usersmetaModel.patch(usersmeta._id, { channels: usersChannels, currentChannel: usersCurrentChannel });
 
@@ -126,9 +117,6 @@ const onMessage = (wss, ws, userId, message, models) => {
       action,
       response: createChannelResponse,
     }
-
-    console.log('usersChannels', usersChannels);
-    console.log('usersCurrentChannel', usersCurrentChannel);
 
     // send message to all other ws connections
     wss.router.broadcastButNotToOwner(ws, responseMessage);
@@ -170,7 +158,8 @@ const onMessage = (wss, ws, userId, message, models) => {
       channelId,
     }
 
-    wss.router.broadcast(responseMessage); // don't sent to ws
+    wss.router.broadcastButNotToOwner(ws, responseMessage);
+    // wss.router.broadcast(responseMessage); // don't sent to ws
     wss.router.sendMessage(ws, Object.assign(responseMessage, { response }));
   }
 
@@ -209,7 +198,8 @@ const onMessage = (wss, ws, userId, message, models) => {
       channelId,
     }
 
-    wss.router.broadcast(responseMessage); // don't sent to ws
+    wss.router.broadcastButNotToOwner(ws, responseMessage);
+    // wss.router.broadcast(responseMessage); // don't sent to ws
     wss.router.sendMessage(ws, Object.assign(responseMessage, { response }));
 
     // remove ws from wss.channels array
@@ -247,8 +237,11 @@ const onMessage = (wss, ws, userId, message, models) => {
     // delete it, and reset their currentChannel property if necessary
     // broadcast the response back to each client individually
     usersmeta.forEach(async (usermeta) => {
+      let channelSeen = false;
+
       for (let i = 0; i < usermeta.channels.length; i += 1) {
         if (usermeta.channels[i].channelType === channelType && usermeta.channels[i].channelId === channelId) {
+          channelSeen = true;
 
           // remove the channel that the user is deleting from usermeta channels
           const usersChannels = usermeta.channels.filter((channel) => channel.channelId !== channelId);
@@ -288,6 +281,17 @@ const onMessage = (wss, ws, userId, message, models) => {
           break;
         }
       }
+
+      if (!channelSeen) {
+        // send deleteChannel message to connections that don't need their currentChannel and/or channels fields updated
+        const responseMessage = {
+          action,
+          channelType,
+          channelId,
+        }
+
+        wss.router.sendMessageToUser(usermeta.userId, responseMessage);
+      }
     });
 
     // remove ws from wss.channels array
@@ -295,7 +299,6 @@ const onMessage = (wss, ws, userId, message, models) => {
     delete wss.channels[channelName];
   }
 
-  // done
   const changeChannel = async () => {
     const { action, usersInformationCollection, channelType, channelId } = message;
     const model = getModel(usersInformationCollection);
@@ -345,18 +348,6 @@ const onMessage = (wss, ws, userId, message, models) => {
     case 'delete':
       deleted();
       break;
-    case 'broadcast':
-      wss.broadcast();
-      break;
-    case 'connection':
-      connection();
-      break;
-    case 'open':
-      open();
-      break;
-    case 'close':
-      close();
-      break;
     case 'joinUsersChannels':
       joinUsersChannels();
       break;
@@ -375,10 +366,19 @@ const onMessage = (wss, ws, userId, message, models) => {
     case 'deleteChannel':
       deleteChannel();
       break;
+    case 'open':
+      open();
+      break;
+    case 'close':
+      close();
+      break;
+    case 'broadcast':
+      broadcast();
+      break;
     default:
       wss.router.sendMessage(client, {
         action: 'error',
-        message: 'Error: valid action not provided.'
+        message: 'Error: invalid action.'
       });
   }
 }
