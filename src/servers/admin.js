@@ -23,7 +23,7 @@ const createAction = (type, { model, data }) => (
   })
 );
 
-const createCollectionManagerRoutes = (models, router, generateModel, addRoutesFromModel) => async ({ action, model, data }) => {
+const createCollectionManagerRoutes = (models, router, generateModel, addRoutesFromModel, apiWss) => async ({ action, model, data }) => {
   const actionToTake = methodMap[action];
 
   if (actionToTake === 'create') {
@@ -36,7 +36,7 @@ const createCollectionManagerRoutes = (models, router, generateModel, addRoutesF
 
     const newModel = await generateModel(modelToMake);
     models.push(newModel);
-    addRoutesFromModel(router, newModel);
+    addRoutesFromModel(router, newModel, apiWss);
 
     return createAction('COLLECTION_ADD_COLLECTION_SUCCESS', { model, data: { name: modelToMake } });
   }
@@ -138,7 +138,7 @@ const configureWs = (socket, collectionManagerRoutes, userRoutes, collectionRout
   });
 };
 
-export const createWsServer = (models, UserModel, router, generateModel, addRoutesFromModel) => {
+export const createWsServer = (models, UserModel, router, generateModel, addRoutesFromModel, apiWss) => {
   const httpServer = http.createServer();
   const wss = new WebSocket.Server({ clientTracking: false, noServer: true });
 
@@ -147,6 +147,7 @@ export const createWsServer = (models, UserModel, router, generateModel, addRout
     router,
     generateModel,
     addRoutesFromModel,
+    apiWss,
   );
   const userRoutes = createUserRoutes(UserModel);
   const collectionRoutes = createCollectionRoutes(models);
